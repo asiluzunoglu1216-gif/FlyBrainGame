@@ -55,3 +55,7 @@ billboard/
 
 # Fly trading (real money): closed source, lives in its own private repo
 flytrade/
+
+# Scratch & local developer logs
+scratch/
+*.log

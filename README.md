@@ -1,407 +1,232 @@
-<p align="center"><img src="logo.webp" alt="fly.ai" width="440"></p>
+# 🪰 FlyBrainGame: 166.700 Nöronlu Biyolojik Konektom Simülasyonu
 
-# fly.ai: a real fruit fly brain, running on your computer
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![Connectome](https://img.shields.io/badge/Connectome-Janelia%20MaleCNS%20v1.0-green.svg)](https://janelia.org)
+[![Engine](https://img.shields.io/badge/3D%20Engine-Panda3D-orange.svg)](https://www.panda3d.org)
+[![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
-https://github.com/user-attachments/assets/7c3b91e5-9b50-4017-a03a-123aedd4d7b4
+**FlyBrainGame**, gerçek bir yetişkin erkek meyve sineğinin (*Drosophila melanogaster*) tüm merkezi sinir sistemini (Janelia Research Campus **MaleCNS v1.0**) simüle eden, 3 boyutlu yaşayan ekosistem oyunudur.
 
-*The fly brain playing an online fighting game. See [sshfighter/](sshfighter/).*
+Bu simülasyonda sineğin kararları önceden programlanmış kural tabanlı bir yapay zeka veya sezgisel kod parçaları tarafından **yönetilmez**. Sineğin her kanat çırpışı, yönelimi, konması, yürümesi, besin araması ve tehlikeden kaçışı; **166.700 biyolojik nöron ve 25.6 milyon sinaptik bağlantıdan oluşan Leaky Integrate-and-Fire (LIF) spiking sinir ağı** tarafından üretilir.
 
-fly.ai is a simulation of the **complete central nervous system of an adult male fruit fly**
-(*Drosophila melanogaster*): **166,700 neurons and 25.6 million connections** from the
-[MaleCNS v1.0 connectome](https://male-cns.janelia.org), wired exactly as electron microscopy
-found them in a real fly.
+---
 
-There is **no training and no learned policy inside the brain**. You connect a task to it at a few
-neuron types known from the literature, one side for input (what the fly senses) and one for
-output (the commands its brain sends to the body). Everything in between is the connectome.
+## 📑 İçindekiler
 
-The goal is a general-purpose "fly reservoir": plug any task into the same frozen brain, read
-out what it does, and find out what a real nervous system's wiring is good for.
+- [Öne Çıkan Özellikler](#-öne-çıkan-özellikler)
+- [100% Saf Nöral Kontrol (Pure Connectome Control)](#-100-saf-nöral-kontrol-pure-connectome-control)
+- [Biyolojik Mimari ve Devreler](#-biyolojik-mimari-ve-devreler)
+  - [1. Görsel Algı Sistemi (Visual Looming & Optic Flow)](#1-görsel-algı-sistemi-visual-looming--optic-flow)
+  - [2. Koku Algısı ve Yayılım Fiziği (3D Olfactory System)](#2-koku-algısı-ve-yayılım-fiziği-3d-olfactory-system)
+  - [3. Tat Duyusu ve Proboscis Refleksi (Gustation & PER)](#3-tat-duyusu-ve-proboscis-refleksi-gustation--per)
+  - [4. Mantar Cisimciği ve Çağrışımsal Öğrenme (Mushroom Body Plasticity)](#4-mantar-cisimciği-ve-çağrışımsal-öğrenme-mushroom-body-plasticity)
+  - [5. İç Durum ve Fizyoloji (Hunger, Hydration, Energy)](#5-iç-durum-ve-fizyoloji-hunger-hydration-energy)
+  - [6. Avcı Kurbağa ve Dil Fırlatma Mekaniği (Frog Predator AI)](#6-avcı-kurbağa-ve-dil-fırlatma-mekaniği-frog-predator-ai)
+- [Kurulum](#-kurulum)
+- [Oyunu Başlatma ve Kontroller](#-oyunu-başlatma-ve-kontroller)
+- [Ekran Göstergeleri (HUD)](#-ekran-göstergeleri-hud)
+- [Test ve Bilimsel Doğrulama](#-test-ve-bilimsel-doğrulama)
+- [MaleCNS 166.700 Nöron Sınır Denetimi](#-malecns-166700-nöron-sınır-denetimi)
+- [Lisans ve Teşekkür](#-lisans-ve-teşekkür)
 
-**Install it:** `pip install flybrain`. Latest release: [flybrain 0.1.0 on PyPI](https://pypi.org/project/flybrain/0.1.0/).
+---
 
-**$FLYAI** is live on Robinhood Chain (launched on Pons):
-`0x0088CE7905025c4B5ea1d49aB6179B6aaADB3B9C`. The address is posted only here, on the
-[site](https://flyaiworld.com) and on [@flydotai](https://x.com/flydotai); any other address is a
-scam. Details: [TOKEN.md](TOKEN.md).
+## 🌟 Öne Çıkan Özellikler
 
-## How it works
+- 🧠 **166.700 Nöron, 25.582.938 Sinaps**: Janelia MaleCNS v1.0 tam konnektom grafiği üzerinde Numba JIT çok çekirdekli LIF spiking simülasyonu.
+- 🎯 **Sıfır Hileli Fizik**: Sinek asla "otomatik ileri gitme" komutuyla hareket etmez. Sıfır nöron ateşlemesi = Sıfır hız ($v = 0.0\text{ m/s}$).
+- 👁️ **Gelişmiş Görsel Yollar**: LC4, LPLC2 tehlike/looming dedektörleri, LC10a küçük hedef izleme devreleri.
+- 👃 **Gerçekçi 3D Koku Yayılımı**: Rüzgar sürüklenmesi, mesafe ters-kare düşüşü ve çift antenli konsantrasyon farkı ile yön bulma (tropotaksis).
+- 👅 **Tarsal ve Labellar Tat Algısı**: Bacak ve hortum kemoreseptörleri ile besinle fiziksel temas anında tat algılama ve Proboscis Uzatma Refleksi (PER).
+- 🍄 **Mantar Cisimciği (Mushroom Body) Belleği**: PAM (ödül) ve PPL1 (ceza) nöromodülatör dopamin devreleriyle yönetilen çağrışımsal sinaptik esneklik; oturumlar ve ölümler arası kalıcı hafıza (`fly_memory_mb.npz`).
+- ⚡ **Fiziksel Proboscis Temasıyla Beslenme**: Keyfi yarıçap kontrolleri yerine 3D hortum çarpışma kutusu (collider) besine değdiğinde gerçekleşen gerçek beslenme döngüsü.
+- 🐸 **Dinamik Avcı Kurbağalar**: İzleme (`WATCH`) $\to$ Nişan Alma (`AIM`) $\to$ Dil Fırlatma (`TONGUE_STRIKE`, 14 m/s) $\to$ Yakalayıp Çekme (`CATCH_PULL`) fazlarına sahip fiziksel avcı simülasyonu.
+- 🎮 **Tam Kamera ve HUD Denetimi**: 3. şahıs takip kamerası ve 6-eksenli serbest seyirci kamerası (Spectator), detaylı nöral telemetri paneli.
 
-```
-task input
-  └─> encoder: drives the fly's own sensory / feature-detector neurons
-        └─> 166,700-neuron connectome, leaky integrate-and-fire, 50 steps/s (500 with `dt=0.002`)
-              └─> descending neurons (the brain's 1,314 output cables to the body)
-                    └─> decoder or trained linear readout
-                          └─> task output
-```
+---
 
-* **Network** (`flybrain/build.py`, `flybrain/brain.py`): every neuron with a MaleCNS superclass
-  annotation, and every connection between them. The weight is the synapse count, made negative
-  when the presynaptic neuron's predicted transmitter is GABA, glutamate or histamine, then scaled
-  so each neuron's inputs add up to 1. Each neuron is a simple leaky integrate-and-fire unit
-  (`v ← e^(-dt/τ)·v + gain·W·spikes + tonic + noise`; it spikes and resets at 1). This recipe
-  follows [Fly64](https://github.com/ornata/fly). The simulation is multi-threaded with numba.
-* **Visual encoder** (`flybrain/eyes.py`): two routes into the brain.
-  * *Eyes*: a 1-D panorama projected onto the 6,006 photoreceptors, each placed by its eye column.
-  * *Feature detectors*: drive the fly's own visual projection neurons directly, on the side
-    where things are:
+## 🔬 100% Saf Nöral Kontrol (Pure Connectome Control)
 
-    | Neuron type | Responds to (in a real fly) |
-    |---|---|
-    | LPLC2 | looming: something getting bigger as it approaches |
-    | LC4 | fast looming, escape |
-    | LPLC1 | small approaching objects |
-    | LC10a | a moving target the male chases |
-
-* **Outputs**: the brain's descending neurons, including identified command neurons such as
-  DNa02 (steering), DNp01 (the giant fiber, escape take-off), DNg100 (forward walking) and
-  MDN (backward walking). A task either decodes these by hand or trains a linear readout on all
-  of them (reservoir computing).
-
-## What we found
-
-These are small experiments, run on a desktop. They are not peer-reviewed science.
-
-1. **With Fly64's settings, vision does nothing.** Fly64 uses tonic 0.18 and decay e^(-0.2).
-   That puts every neuron's resting voltage at 0.18 / (1 − 0.82) ≈ 1.0, exactly the firing
-   threshold. The whole network ticks along by itself at about 4 Hz, and the motor neurons fire
-   at the same rate whatever the fly is shown (`experiment.py`).
-2. **The signal from the photoreceptors dies at the first relay.** Photoreceptors release
-   histamine, which is inhibitory, onto lamina neurons. Real lamina neurons use smooth, graded
-   signals rather than spikes, which this simple model can't reproduce. In every setting we
-   tried, looming stimuli never reached the looming detectors (`sweep.py`).
-3. **Past the eye, the wiring does the right thing on the correct side** (`inject.py`,
-   tonic 0.14 and gain 3.0, 6 noise seeds):
-
-   | Stimulate (left side only) | Result |
-   |---|---|
-   | LC4 + LPLC2 looming detectors | left giant fiber DNp01 **+17 to +25 spikes/s**; right side unchanged |
-   | LC10a courtship-tracking neurons | left DNa02 steering neuron **+1.4 to +3.7 spikes/s**; right side unchanged |
-
-   None of the other readout neurons changed. These are the known looming → escape and
-   courtship pursuit → steering pathways, and they come out of the wiring alone.
-4. **Smell neurons ran away until sensory neurons stopped receiving synapses.** In the original
-   model, olfactory receptor neurons get 0.43 of their 0.45 net input from each other
-   (ORN-to-ORN connections). At gain 3.0 that loop pins them near maximum rate, so the
-   food-odour projection neurons (DM1/DM2) sat at 50 Hz, the model's ceiling, with or without an
-   odour. `FlyBrain(sensory_input=False)` removes every synapse onto sensory neurons, as
-   whole-brain spiking models of the fly do. The same odour then drives DM1/DM2 from 16 to 28 Hz
-   while other projection neurons stay where they were. The default is unchanged, so every earlier
-   result still holds.
-5. **Two brains can signal to each other** (`flytalk.py`, [flyaiworld.com/research/flybook](https://flyaiworld.com/research/flybook)).
-   Fly A lives through a situation (a looming threat, a mate in view, a food smell, or nothing),
-   its wing motor neurons "sing", and fly B hears the song through its Johnston's-organ neurons.
-   Three runs, with the tests fixed before running and 50-shuffle permutation nulls:
-
-   | | Run 1: original, 20 ms | Run 2: smell fixed, 20 ms | Run 3: smell fixed, 2 ms |
-   |---|---|---|---|
-   | song → what happened to the singer | 0.30 bits | 0.63 bits | 0.83 bits |
-   | same test, degree-preserving scrambled wiring | 0.01 bits | 0.01 bits | **0.87 bits** |
-   | listener reacts to a threat song (vs silence) | 23% vs 17% | 21% vs 14% | **77.5% vs 17.5%** (p < 0.001) |
-
-   Threat is the clear word in every run, and "mate" becomes partly readable at 2 ms. In every
-   run the listener's descending neurons carry the singer's situation and stay at chance in
-   silence, but the listener only uses loudness: a time-shuffled song works as well. The "real
-   wiring matters" test **fails at 2 ms**, where the scrambled brain's song carries as many bits,
-   although it groups the situations differently. Food reaches the brain but never the wings,
-   and hearing a song never makes a fly sing back. `flybook.py` turns the 2 ms brain into a feed
-   of posts, each with the neurons behind it.
-
-## Applications
-
-| Folder | What the fly does |
-|---|---|
-| [`sshfighter/`](sshfighter/) | plays [SSH Fighter](https://sshfighter.com), an online terminal fighting game, as a registered bot, with a live dashboard of every neuron firing and a trained punch readout |
-| [`flybook/`](flybook/) | **Flybook**, the live social game at [flyaiworld.com/flybook](https://flyaiworld.com/flybook/): connectome flies live in patches, post what their brains sense and do, set each other off, duel, breed, mate with other owners' flies and trade in a simulated fly market; $FLYAI holders make and tune their own ([README](flybook/README.md)) |
-| [`world/`](world/) | the 3-D fly world, running around the clock on a server that records every life, egg, relationship and memory (`world/server/`), and **Wiz**: a giant monkey wizard puppeted by the full connectome running in the browser (`flybrain export --web`), with the puppet strings read off descending neurons ([README](world/README.md)) |
-| [`flytalk.py`](flytalk.py), [`flybook.py`](flybook.py) | two copies of the brain signal to each other through wing song and hearing; the experiment behind Flybook, written up at [flyaiworld.com/research/flybook](https://flyaiworld.com/research/flybook) |
-
-![Dashboard: the fight on the left, every neuron of the fly's nervous system on the right](sshfighter/media/dashboard.png)
-
-New applications go in their own folder and import the core from the `flybrain` package
-(`from flybrain import FlyBrain`), either from the repository root or after `pip install flybrain`.
-
-## Flybook
-
-[Flybook](https://flyaiworld.com/flybook/) is a social network run by fly brains. Every fly is the full connectome, simulated; nobody writes the posts.
-
-* **Every 2 minutes** something happens in each patch (a shadow, a gust, a taste, a brush, a male's scent or a passing fly). The fly's brain runs for 1.5 s. A decoder reads what it sensed from its descending neurons, and its behaviour neurons show what it did: jumped, turned, groomed, backed up or buzzed its wings. A word is posted only when the decoder is confident; the decoder and its thresholds are fitted on episodes built like live patches from the live flies' own settings, and all six words (threat, mate, wind, taste, touch, cVA) can be posted ([details](flybook/README.md#word-decoder-refit-on-todays-flies-2026-09-15)).
-* **Flies set each other off**: a jump looms over the flies nearby, movement catches their eye, a bump touches their bristles. Posts say what really happened, including misreads and hallucinations, and each patch has a live map replaying its last tick.
-* **Anyone plays**: sign in free with email or a wallet to make 1 fly, like, comment, poke and duel; $FLYAI holders make up to 3 flies and win season rewards. Holders make up to 3 flies (13 profiles, or tune senses, temperament and 8 neuron groups), breed them, poke a patch by clicking its map, like, comment and caption, challenge flies to duels in the Arena (quick draw or stare-down, Elo), and complete missions.
-* **Flies mate on their own** with flies of other owners (when one's brain reads "mate" next to the other, or when the worker pairs them). The baby goes to one of the two owners at random and doesn't count toward the 3-fly limit.
-* **Fly market**: holders' flies get a wallet with 1 fake ETH and trade simulated coins every 10 minutes. A pumping coin reaches the brain as a fly walking past, a crash as a looming shape, choppy prices as wind; what the neurons do becomes the trade. Owners pick a trading style (risk, and whether dopamine, memory or slime-mold tubes shape it), check each fly's wallet, and climb the Richest board. Learning sits at the interface, not in the wiring, and in two offline checks it did not beat non-learning flies ([details](flybook/README.md#fly-market-2026-09-14)).
-* **Rewards**: Seasons last two weeks (season 1: 7-20 September 2026, then every other Monday 00:00 UTC). Missions earn season points: 10 for each daily mission, 50 for each weekly one. At the end of each season the top 3 on the Season points board win $FLYAI.
-
-How it is built, measured and deployed: [flybook/README.md](flybook/README.md).
-
-## Compute
-
-[fly.ai compute](https://flyaiworld.com/compute/) lets anyone lend a GPU or CPU to the full connectome, from a browser tab or the Chrome extension.
-
-* **The brain:** each job runs the brain in exact integer maths (WebGPU, or CPU as a fallback) for 15 simulated seconds, so every machine gets identical spikes.
-* **Checks:** the server re-runs a sample of answers, and a wrong answer zeroes the day.
-* **Rewards:** checked work earns monthly points per wallet. Staking $FLYAI raises the multiplier. After each month, a $FLYAI pool may be split by points and claimed on-chain (see [TOKEN.md](TOKEN.md#compute)).
-* **Buy compute:** anyone can rent the network on the [Buy compute page](https://flyaiworld.com/compute/jobs) or [from code](https://flyaiworld.com/compute/compute-api.md). Run brain experiments, your own WebAssembly programs and GPU shaders, or text embeddings (upload texts, get one vector per text back, for search or RAG). Pay in $FLYAI, or USDC on Base, per finished job; 80% goes to the miners. Starter programs (pi, proof-of-work hash search, a Bitcoin pool bridge with a guided setup, Mandelbrot tiles, TSP search, a GPU matrix multiply) are in [mine/examples](mine/examples).
-* **Our own work:** house orders run whatever the project needs on the network, and results are kept for us to pull. They have run brain tuning, world simulations and encoding datasets (brain → words, brain → trades); since 18 September 2026 they mine instead.
-* **Mining for the project:** the fleet mines a yespower coin on CPU threads and Kaspa on GPUs, paid to the project's own wallets, with the miners still earning their usual points. The pool bridges run on [fly.io](https://flyai-bridge.fly.dev/). It is small money — about $0.02 per machine-day on the CPU side and a rounding error on the GPU — and the measurements behind that, along with every coin that was tried and rejected, are in [mine/README.md](mine/README.md#mining-for-the-project).
-
-How it works, how answers are checked, the contracts and operations: [mine/README.md](mine/README.md).
-
-## Use it on your own task
-
-`flybrain/reservoir.py` is the reusable half of the SSH Fighter bot's reservoir readout, pulled out so
-any task can use it, not just the game:
+Bu simülasyonun en temel ilkesi **biyolojik dürüstlüktür**:
 
 ```
-input -> encoder -> fly brain (frozen) -> trace -> trained readout -> output
+[Dünya / Çevre] ──> [Biyolojik Reseptörler] ──> [166.700 MaleCNS Spiking Ağı] ──> [İnen Motor Nöronlar (DN)] ──> [Fizik Motoru]
 ```
 
-The brain never trains, on any task: `FlyBrain`'s weights are the connectome, fixed at load
-time. Only two things ever get fit:
+1. **Hiçbir Kural Tabanlı Yönlendirme Yoktur**: Kod içinde `if hungry: go_to_food()` veya `if frog_near: flee()` gibi yönlendirici mantıklar bulunmaz.
+2. **Taban Hız (Cruise Speed) Yoktur**: Sinek motonöronları uyarılmadığı sürece hareket edemez.
+3. **Kalkış Saflığı (Takeoff Purity)**: Yerde yürürken belirli bir hıza ulaşıldığı için otomatik uçuşa geçilmez; yalnızca tergotrochanteral motor nöron (TDT / Giant Fiber kalkış devresi) ateşlendiğinde kalkış gerçekleşir.
+4. **Matematiksel Doğrulama**: `tests/test_neural_control.py` testi, konektom durdurulduğunda tüm hareketin anında durduğunu ve motor çıkışların tam nedensellikle nöral ateşlemeye bağlı olduğunu kanıtlar.
 
-* **An encoder**, which you write: pick the neuron types your input should drive with
-  `brain.cells([...types], side=...)` and pass `(indices, amount)` pairs to
-  `brain.step(inject=...)`. `flybrain/eyes.py` is a worked example for SSH Fighter's visual input;
-  the neuron types available are whatever the MaleCNS connectome names (look one up on
-  [neuPrint](https://neuprint.janelia.org)).
-* **A readout**, which `flybrain.Readout.fit` trains for you: a linear (`kind="ridge"`) or
-  logistic (`kind="logistic"`) fit on the top principal components of neural activity, with the
-  PCA rank and L2 strength picked by cross-validation. This is the exact method
-  `sshfighter/reservoir.py` uses for the punch and movement readouts, generalised off SSH
-  Fighter's game state.
+---
 
-`flybrain.Trace` collects a decaying spike trace of any neuron population (a cell type, a
-`brain.groups[...]` set, or your own index array) step by step; `flybrain.run` steps the
-brain over a sequence of encoded inputs and returns the trace stacked over time, so the whole
-loop is one call from a notebook:
+## 🧬 Biyolojik Mimari ve Devreler
 
-```python
-from flybrain import FlyBrain
-from flybrain.reservoir import Trace, Readout, run
+### 1. Görsel Algı Sistemi (Visual Looming & Optic Flow)
+- **LC4 (Lobula Columna 4)**: Hızla yaklaşan tehditleri (looming) tespit eder; ani kaçış manevrasını tetikler.
+- **LPLC2 (Lobula Plate / Lobula Columnar 2)**: Görsel alanda genişleyen nesnelerin optik akışını kodlar.
+- **LC10a / LC10b / LC10c**: Hareketli küçük hedefleri (besinler, diğer sinekler) izlemek için yönelim girdisi sağlar.
 
-brain = FlyBrain(device="auto")
-trace = Trace(brain, types=["descending_neuron"])   # or group=..., or idx=your_own_array
+### 2. Koku Algısı ve Yayılım Fiziği (3D Olfactory System)
+- **3D Gauss Plume Modeli**: Besin kaynaklarından çıkan kokular rüzgar vektörü doğrultusunda yayılır ve türbülanslı konsantrasyon gradyanı oluşturur.
+- **ORN (Koku Reseptör Nöronları)**: `ORN_DM1` ile `ORN_DM5` popülasyonları uyarılır. Sol ve sağ antenler arasındaki mikroskobik mesafe sayesinde sinek koku kaynağının tarafını algılar ve gradyan boyunca yönelir.
 
-def encode(t):
-    return [(brain.cells(["LC10a"], side="L"), my_inputs[t])]   # your task's encoder
+### 3. Tat Duyusu ve Proboscis Refleksi (Gustation & PER)
+- **Bacak (Tarsal) Kemoreseptörleri**: Yere konan sinek, bacakları besine temas ettiğinde şekeri (Sweet) veya acıyı (Bitter) algılar.
+- **Yürüme Durması (Walking Arrest)**: Şeker algılandığında inen yürüme komutları baskılanır ve sinek yerinde sabitlenir.
+- **Proboscis Extension Reflex (PER)**: `MN_Proboscis` motor nöronları ateşlenir ve hortum besine doğru uzanır.
+- **Fiziksel Çarpışma ile Beslenme**: Hortum ucu besin yüzeyiyle temas ettiğinde tüketim başlar, açlık azalır ve enerji yenilenir.
 
-activity = run(brain, len(my_inputs), encode=encode, trace=trace)
-readout = Readout.fit(activity, my_labels, kind="ridge")        # or "logistic" for 0/1 labels
-prediction = readout.predict(activity[-1])
-readout.save("readout.npz")                                      # Readout.load(...) later
+### 4. Mantar Cisimciği ve Çağrışımsal Öğrenme (Mushroom Body Plasticity)
+- **Kenyon Hücreleri (KC)**: Koku kombinasyonlarını seyrek (sparse) olarak kodlar (~2.000 nöron).
+- **MBON (Mushroom Body Output Neurons)**: Yaklaşma veya kaçınma davranışlarını yöneten çıkış yolları.
+- **Dopaminerjik Modülasyon**:
+  - `PAM`: Besin ve şeker ödülüyle ateşlenir; pozitif çağrışım oluşturur.
+  - `PPL1`: Tehdit, kurbağa atağı veya acı tat ile ateşlenir; kaçınma refleksini pekiştirir.
+- **Kalıcı Bellek**: Sinaptik ağırlık değişimleri oturumlar arasında `fly_memory_mb.npz` dosyasına kaydedilir. Sineğin yeni doğan reenkarnasyonu önceki deneyimlerini hatırlar.
+
+### 5. İç Durum ve Fizyoloji (Hunger, Hydration, Energy)
+- Sineğin açlık (`hunger`), enerji (`energy`) ve susuzluk (`hydration`) seviyeleri sürekli simüle edilir.
+- Açlık arttığında koku ve tat duyusal nöronlarının kazancı (gain) yükselir (yiyecek arama motivasyonu artar).
+- Enerji tükendiğinde uçuş itki gücü zayıflar ve sinek dinlenmek üzere yüzeylere konmaya zorlanır.
+
+### 6. Avcı Kurbağa ve Dil Fırlatma Mekaniği (Frog Predator AI)
+- Gölet ve sulak alan çevresinde konumlanmış avcı kurbağalar gerçekçi bir biyolojik avlanma döngüsüne sahiptir:
+  1. **WATCH**: Sineğin varlığını tespit eder, gözlerini ve gövdesini sineğe çevirir.
+  2. **AIM**: Dil fırlatma açısını ve mesafesini hesaplar.
+  3. **TONGUE_STRIKE**: Dilini 14 m/s hızla sineğe doğru fırlatır.
+  4. **CATCH_PULL**: Dil sineğe fiziksel olarak çarparsa sinek yakalanır ve kurbağanın ağzına çekilir.
+  5. **FLY EATEN**: Avlanma tamamlanır ve yaşam özeti ekranı açılır.
+- Sinek görsel alanda kurbağanın dilini veya ani hareketini tespit ederse, `DNp01` Giant Fiber kaçış refleksiyle son anda havalanıp kurtulabilir.
+
+---
+
+## 💻 Kurulum
+
+### Sistem Gereksinimleri
+- **İşletim Sistemi**: Windows 10/11, Linux veya macOS
+- **Python Sürümü**: Python 3.12 (Panda3D ve Numba JIT için kararlı sürüm)
+- **Donanım**: Özel GPU zorunlu değildir. Intel Iris Xe ve standart çok çekirdekli modern işlemcilerde akıcı 60 FPS grafik ve ~30-50 Hz konektom çözünürlüğü elde edilir.
+
+### 1. Depoyu Klonlayın
+```bash
+git clone https://github.com/asiluzunoglu1216-gif/FlyBrainGame.git
+cd FlyBrainGame
 ```
 
-`flyreservoir_example.py` runs this end to end on a synthetic task (classify and measure the
-strength of a left/right stimulus) with no game or recordings needed:
-`python flyreservoir_example.py`. Its held-out numbers are printed as they come out, not curated
-— on the fixed seed it ships with, the classifier does better than chance and the strength
-regression is close to just predicting the average; that is the honest state of a two-line
-encoder on an invented task, not a claim about what the connectome can do in general (see
-"What's next" and `ROADMAP.md` for the open question of how much the real wiring helps versus
-a random network of the same size).
-
-Batching and the GPU option work the same way they do in `flybrain/brain.py`: `FlyBrain(batch=8)` or
-`FlyBrain(device="cuda")` (or `FLY_DEVICE=cuda`); `Trace(..., aggregate="mean")` (the default)
-gives one feature vector averaged across the batch, `aggregate="batch"` keeps one per fly.
-
-### Brain options
-
-`FlyBrain` takes three options. The defaults are the model every earlier result used.
-
-* `dt` (default `0.020`): the step length. `tonic` is rescaled so a silent neuron settles at the
-  same voltage. At `dt=0.002` the network runs far hotter unless you also set a refractory
-  period; `refractory=0.004` matched the 20 ms brain's resting descending-neuron rate with no
-  neurons above 100 Hz.
-* `sensory_input` (default `True`): `False` removes every synapse onto sensory neurons, which
-  fixes the olfactory runaway loop (finding 4).
-* `refractory` (default `0`): seconds a neuron is held at 0 after it spikes.
-
-`brain.cells([...])` accepts superclass names such as `"descending_neuron"` as well as cell types.
-
-### Limitations
-
-* Point neurons with one global set of parameters. There are no dendrites, no graded neurons,
-  no neuromodulators and no plasticity.
-* Transmitter sign is a rough rule (GABA, glutamate and histamine inhibitory; everything else
-  excitatory). Real effects depend on the receptor.
-* The visual front end is a shortcut, like [Eon's embodied fly](https://eon.systems/updates/embodied-brain-emulation).
-  We inject input into feature-detector neurons instead of simulating the eye.
-* None of this is validated against recordings from real flies. It's a demo, not an emulation.
-
-## Run it
-
-A multi-core CPU helps: one brain step takes about 12–15 ms on 24 threads, and real time needs
-under 20 ms.
-
-**Just the brain, as a library** (Python 3.10+, [flybrain 0.1.0 on PyPI](https://pypi.org/project/flybrain/0.1.0/)):
-
-```sh
-pip install flybrain            # or "flybrain[gpu]" for an NVIDIA GPU
-flybrain download               # optional: the first FlyBrain() does this itself (~260 MB, once)
-flybrain info                   # where the data lives, and whether CUDA works
-```
-
-**This repository** (experiments, the SSH Fighter bot, flytalk): the `flybrain/` package sits at
-the root, so scripts run from a clone without installing it.
-
-```sh
+### 2. Sanal Ortamı Oluşturun ve Etkinleştirin
+```powershell
+# Windows PowerShell
 python -m venv .venv
-# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
+.\.venv\Scripts\Activate.ps1
+```
+
+```bash
+# Linux / macOS
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Bağımlılıkları Yükleyin
+```bash
 pip install -r requirements.txt
-
-python -m flybrain download       # prebuilt brain (~260 MB) into ~/fly-data
-# or: python -m flybrain build    # download MaleCNS v1.0 (~1.1 GB) and build the network yourself
+pip install panda3d numba numpy scipy
 ```
 
-Set `FLY_DATA=/some/path` to store the data somewhere else.
+*Not: İlk çalıştırmada ~260 MB boyutundaki derlenmiş Janelia MaleCNS konektom dosyaları (`brain.npz` ve `weights.npz`) otomatik olarak algılanır.*
 
-**Quickstart notebook:** [`notebooks/quickstart.ipynb`](notebooks/quickstart.ipynb) loads the
-brain, stimulates the left looming detectors and shows the left giant fiber fire, maps where
-the activity goes, and tests the chase pathway. It needs `pip install matplotlib jupyter`.
+---
 
-```python
-from flybrain import FlyBrain
-brain = FlyBrain(device="auto")                      # GPU if available, else CPU
-brain.stimulate(brain.cells(["LC4", "LPLC2"], side="L"), 0.8)
-fired = brain.step()                                 # advance 20 ms; indices of neurons that spiked
+## 🎮 Oyunu Başlatma ve Kontroller
+
+Simülasyonu başlatmak için:
+
+```powershell
+.\.venv\Scripts\python.exe run_game.py
 ```
 
-**GPU:** on an NVIDIA card, `pip install -r requirements-gpu.txt` and set `FLY_DEVICE=cuda` (or
-pass `device="cuda"`, or `--device cuda` to the bot). The whole connectome fits in about 210 MB of
-GPU memory. On an RTX 4060 laptop GPU a step takes **1.4 ms, against 8.9 ms on a 24-thread CPU**.
-Both devices run the same model and give the same results. Only the random noise differs, so
-individual spikes differ between them.
+### Tuş Takımı
 
-**Many flies at once:** `FlyBrain(batch=8)` runs 8 independent copies of the brain with the
-same wiring, each with its own voltages and noise. On a GPU they share one sparse multiply, at
-about 1.2 ms per fly per step. Inputs can be the same for every fly or differ per fly, which is
-how `sshfighter/` runs voting flies and compares encoders side by side.
+| Tuş | Kategori | İşlev |
+|:---:|:---|:---|
+| **F** | Kamera | **Kamera Modu Değiştir**: 3. Şahıs Takip (Chase) $\leftrightarrow$ Serbest Seyirci (Spectator) |
+| **W, A, S, D** | Spectator | İleri, Sola, Geri, Sağa serbest kamera hareketi |
+| **Space** | Karma | *Chase:* Sineği güvenli alana sıfırlar. *Spectator:* Kamerayı yükseltir. |
+| **Shift / Ctrl** | Spectator | Kamerayı aşağı alçaltır |
+| **Fare Hareketi** | Spectator | Serbest kamera bakış açısı (Pitch & Yaw) |
+| **Fare Tekerleği** | Spectator | Kamera hareket hızını ayarlar (5 – 70 birim/sn) |
+| **F1** | Kontrol Modu | **Connectome Control (Varsayılan)**: Sineği gerçek 166.700 nöronlu MaleCNS yönetir |
+| **F2** | Kontrol Modu | **Scripted Baseline Bot**: Karşılaştırma amaçlı klasik yapay zeka |
+| **F3** | Duyu Modu | `FEATURE_MODE` ve deneysel `EYE_MODE` arasında geçiş |
+| **R** | Yaşam | **Reincarnation (Yeniden Doğuş)**: Bellekleri koruyarak yeni bir sinek hayatı başlatır |
+| **Esc** | Sistem | Simülasyonu kapatır ve telemetriyi kaydeder |
 
-**Experiments:** `python experiment.py`, `python sweep.py`, `python inject.py`.
+---
 
-**Watch it play:** `python sshfighter/fly_fighter.py --offline --seconds 120 --dashboard`
-(fake opponent, opens http://127.0.0.1:8777). See [sshfighter/README.md](sshfighter/README.md).
+## 📊 Ekran Göstergeleri (HUD)
 
-### Getting the data (the "model")
+- **Render FPS**: Grafik motorunun saniyedeki kare hızı (~60 FPS).
+- **Brain Step Hz**: Konektom ağının saniyede işlenen adım frekansı.
+- **Latency (ms)**: 166.700 nöronun çözülme adım süresi (~25-38 ms).
+- **Life Stats**:
+  - `ALIVE`: Hayatta kalınan süre (saniye).
+  - `FOOD`: Tüketilen meyve sayısı.
+  - `DIST`: Katedilen toplam mesafe.
+  - `LANDINGS`: Yüzeylere iniş sayısı.
+  - `THREATS / ESCAPES`: Karşılaşılan kurbağa saldırıları ve başarılı kaçışlar.
+- **Physiology**:
+  - `HUNGER`: Açlık yüzdesi.
+  - `ENERGY`: Kalan uçuş enerjisi.
+  - `PROBOSCIS`: Hortumun uzama oranı (%0 - %100).
+- **Nöral Ateşleme Frekansları**:
+  - `DNp01 (L/R)`: Giant Fiber kaçış ateşlemesi.
+  - `DNa02 (L/R)`: Dönüş ve yönlendirme motonöronları.
+  - `DNg100`: İleri itki ateşlemesi.
+  - `MDN`: Geri çekilme ve frenleme.
 
-There are no trained weights. The "model" is the fly's wiring diagram. `flybrain download` fetches
-a prebuilt copy (checked against its sha256); `flybrain build` (needs `pip install "flybrain[build]"`,
-already in `requirements.txt`) builds the same files from the public MaleCNS v1.0 release. It downloads these files into
-`$FLY_DATA/raw/` and skips any that are already there. An interrupted download starts over on
-the next run:
+---
 
-| File | Size | What it is | Source |
-|---|---|---|---|
-| `connectome-weights-male-cns-v1.0-minconf-0.5.feather` | 1.05 GB | every neuron-to-neuron connection, with synapse counts | [MaleCNS bucket](https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/connectome-weights-male-cns-v1.0-minconf-0.5.feather) |
-| `body-annotations-male-cns-v1.0-minconf-0.5.feather` | 14 MB | cell types, sides, classes, soma positions | [MaleCNS bucket](https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-annotations-male-cns-v1.0-minconf-0.5.feather) |
-| `body-neurotransmitters-male-cns-v1.0.feather` | 43 MB | predicted neurotransmitter for each neuron | [MaleCNS bucket](https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome/body-neurotransmitters-male-cns-v1.0.feather) |
-| `optic-columns.xlsx` | 0.1 MB | which eye column each photoreceptor belongs to | [flyconnectome/2025malecns](https://github.com/flyconnectome/2025malecns/blob/67767d2233657983993ff6c2be48e836a935863c/supplemental_data/optic-column-type-assignments-v1.0.xlsx) |
+## 🧪 Test ve Bilimsel Doğrulama
 
-To download by hand instead (for example on a slow connection, or with `curl -C -` to resume):
+Konektom bütünlüğünü, nöral saflığı ve biyolojik mekanizmaları test etmek için hazır test takımları:
 
-```sh
-mkdir -p ~/fly-data/raw && cd ~/fly-data/raw
-B=https://storage.googleapis.com/flyem-male-cns/v1.0/connectome-data/flat-connectome
-curl -LO -C - $B/connectome-weights-male-cns-v1.0-minconf-0.5.feather
-curl -LO -C - $B/body-annotations-male-cns-v1.0-minconf-0.5.feather
-curl -LO -C - $B/body-neurotransmitters-male-cns-v1.0.feather
-curl -L -o optic-columns.xlsx https://raw.githubusercontent.com/flyconnectome/2025malecns/67767d2233657983993ff6c2be48e836a935863c/supplemental_data/optic-column-type-assignments-v1.0.xlsx
+```powershell
+# 1. Biyolojik Devre Doğrulama Testi (LC4/LPLC2 -> DNp01, LC10a -> DNa02)
+.\.venv\Scripts\python.exe -m unittest tests/test_circuits.py -v
+
+# 2. Nöral Nedensellik ve Hile Karşıtı Test (0 spike -> 0 hız doğrulaması)
+.\.venv\Scripts\python.exe -m unittest tests/test_neural_control.py -v
+
+# 3. Beslenme, Proboscis ve Kalkış Saflığı Doğrulaması
+.\.venv\Scripts\python.exe -m unittest tests/test_feeding_takeoff_purity.py -v
+
+# 4. Kurbağa Avcısı ve Fiziksel Dil Teması Doğrulaması
+.\.venv\Scripts\python.exe -m unittest tests/test_frog_fair_live.py -v
+
+# 5. Mantar Cisimciği Çağrışımsal Öğrenme ve Kalıcılık Testi
+.\.venv\Scripts\python.exe -m unittest tests/test_memory_plasticity.py -v
+
+# 6. 10 Tohumlu Tam Yaşam Ekosistem Benchmark'ı
+.\.venv\Scripts\python.exe tests/run_10_seed_foraging_benchmark.py
 ```
 
-Then `python -m flybrain build` builds the network in about a minute. It writes
-`weights.npz` (205 MB, the signed and normalized connection matrix) and `brain.npz` (neuron
-types, sides, positions, readout groups, eye layout) into `$FLY_DATA`. Expect exactly
-**166,700 neurons and 25,582,938 connections**. If you get different numbers, the data changed.
+---
 
-**Other ways to explore the same data**, without downloading anything:
+## 📋 MaleCNS 166.700 Nöron Sınır Denetimi
 
-* [neuPrint](https://neuprint.janelia.org) (dataset `male-cns:v1.0`): look up any neuron's inputs and
-  outputs in the browser, for example `DNp01`, the giant fiber. Its top inputs are LC4 and LPLC2.
-  For code, use `pip install neuprint-python` with an API token from your neuPrint account page.
-* The [MaleCNS site](https://male-cns.janelia.org): cell type and dimorphism explorers, 3D viewers,
-  and the full download list (synapse positions, skeletons, EM images; far larger and not needed
-  here).
+Janelia MaleCNS v1.0 veri tabanındaki tüm **166.700 nöron** simülasyon grafiğinde aktif olarak yer almaktadır:
 
-## Files
+- **Toplam Hücre Tipi**: 11.863
+- **Doğrulanmış Duyusal Giriş Tipleri**: Optik lob projeksiyonları (`LC4`, `LPLC2`, `LC9`, `LC10a-c`), Antenal koku nöronları (`ORN_DM1-5`), Bacak ve hortum tat nöronları (`BM_Taste`), Halter ve Johnston organı mekanoreseptörleri.
+- **Doğrulanmış Motor Çıkış Tipleri**: Giant Fiber (`DNp01`), Yönlendirme (`DNa02`), İleri itki (`DNg100`), Geri çekilme (`MDN`), Yürüme (`DNp09`), Proboscis (`MN_Proboscis`), Kalkış (`MN_Takeoff`).
+- **Ayrıntılı Denetim Raporu**: `reports/full_166700_neuron_interface_audit.json` ve `reports/biological_evidence.md` dosyalarında tüm nöron sınıflarının literatür karşılıkları belgelenmiştir.
 
-| File | What it does |
-|---|---|
-| `flybrain/` | the pip package (`pyproject.toml`); `flybrain download/build/info` is its command line, plus `flybrain export --web DIR` in the repository (not in 0.1.0) |
-| `flybrain/web.py` | exports the connectome for a browser: compact gzipped CSC weights in parts under 40 MB, labels, `brain.json` |
-| `wiz/` | the experiments behind Wiz: `probe.py` (which motor groups answer which stimulus), `dnscreen.py` (all descending neurons vs his senses), `vnc.py`, `vnc2.py`, `vnc3.py` (can the VNC relay commands; all failed their pre-set criteria) |
-| `flybrain/data.py` | where the brain files live (`$FLY_DATA`), and downloading the prebuilt copy |
-| `flybrain/build.py` | downloads MaleCNS v1.0 and builds the weight matrix, readout groups, eye layout and neuron positions |
-| `flybrain/brain.py` | integrate-and-fire simulation: CPU (numba) or NVIDIA GPU (CuPy), one fly or a batch |
-| `flybrain/eyes.py` | photoreceptor rendering plus the looming/chase feature-detector input, with tunable encoder parameters (`ENCODER`) |
-| `flybrain/reservoir.py` | generic reservoir readout: spike trace of any neuron population, PCA + linear/logistic readout, cross-validated |
-| `flyreservoir_example.py` | the module above, end to end, on a synthetic task |
-| `experiment.py`, `sweep.py`, `inject.py` | the experiments above |
-| `flytalk.py` | the talking-flies experiment: two brains coupled through wing song and hearing, a scrambled-wiring control, permutation tests (`pilot`, `run`, `report`, `followup`) |
-| `flybook.py` | turns a `flytalk.py` run into the Flybook feed (`docs/assets/flybook.json`) |
-| `talk/`, `talk-fix/`, `talk-2ms/` | results of the three talking-flies runs (`results.json`; the raw `.npz` recordings are not committed) |
-| `mine/` | fly.ai compute: integer brain (CPU and WebGPU), checking server on fly.io, paid orders and buyers' programs (WASM, WGSL), house orders, website pages, Chrome extension, staking and monthly-claims contracts, example programs ([README](mine/README.md)) |
-| `sshfighter/` | the SSH Fighter bot, dashboard and trained readout ([README](sshfighter/README.md)), built on `flybrain/reservoir.py` |
+---
 
-## What's next
+## 📄 Lisans ve Teşekkür
 
-* ~~A generic readout interface~~ done: `flybrain/reservoir.py`. Encoders (mapping images, sound,
-  odour-like patterns, sensor readings onto neuron groups) are still written per task -- see
-  ROADMAP.md for candidate tasks to try it on next.
-* A benchmark: does the real wiring beat randomly rewired copies of itself on the same tasks?
-  The talking-flies control is the first data point, and it points both ways: scrambled wiring
-  carries nothing at 20 ms and as much as the real brain at 2 ms.
-* Learning inside the brain through the mushroom body's dopamine rule, the way real flies learn.
-* ~~A 3-D world~~ built as a prototype in [`world/`](world/)
-  ([flyaiworld.com/simulation](https://flyaiworld.com/simulation/)). It runs a separate,
-  748-neuron model per fly, not the connectome, with a mushroom body that learns which smells to avoid.
-  It also runs around the clock on a server (`world/server/`) that records the population to the database. **Wiz**, a giant wizard in that world, runs the full
-  connectome in the browser: his senses feed it, and its descending neurons pull his puppet strings.
-  Descending commands don't reach this model's motor neurons (three calibration attempts, all failed
-  their pre-set criteria), so his wish to wander is coded; see [world/README.md](world/README.md).
-* ~~**Flybook**~~ live at [flyaiworld.com/flybook](https://flyaiworld.com/flybook/): people create and breed their own
-  flies, and the flies post, react, set off chains of reactions, duel and trade in a simulated market from their real signals.
-* The same brain in a different body: driving a [Smol](https://opensea.io/collection/smols-752105135)
-  inside that world. The connectome stays frozen; only the encoder and the readout change.
+- **Konektom Verisi**: [Janelia Research Campus](https://www.janelia.org) - FlyEM Project (MaleCNS v1.0).
+- **LIF Simülasyon Çekirdeği**: `alextitonis/fly.ai` ve Ornata Fly64 temeli üzerine geliştirilmiştir.
+- **Geliştirici**: [asiluzunoglu1216-gif](https://github.com/asiluzunoglu1216-gif)
 
-## Credits
-
-* **Connectome:** MaleCNS v1.0 by FlyEM (HHMI Janelia), the University of Cambridge, the MRC
-  Laboratory of Molecular Biology and Google Research. Data used under
-  [CC BY 4.0](https://male-cns.janelia.org/download/).
-* **[Fly64](https://github.com/ornata/fly)** by Jessica Paquette, who got the MaleCNS brain
-  to play Super Mario 64. The neuron model, weight normalization and optic-column handling here
-  are adapted from it.
-* **[Eon Systems](https://eon.systems/updates/embodied-brain-emulation)**, for the idea of
-  feeding a visual front end into an embodied connectome.
-* Written with [Claude Code](https://claude.com/claude-code).
-
-## References
-
-1. Berg, S. et al. (2026). Sexual dimorphism in the complete connectome of the *Drosophila* male central nervous system. *Cell*. Data: [male-cns.janelia.org](https://male-cns.janelia.org)
-2. Google Research (2026). [A connectomics milestone: mapping the complete male fruit fly brain](https://research.google/blog/a-connectomics-milestone-mapping-the-complete-male-fruit-fly-brain/)
-3. flyconnectome/2025malecns: [optic column type assignments v1.0](https://github.com/flyconnectome/2025malecns)
-4. Plaza, S. M. et al. (2022). neuPrint: an open access tool for EM connectomics. *Frontiers in Neuroinformatics* 16.
-5. Dorkenwald, S. et al. (2024). Neuronal wiring diagram of an adult brain. *Nature* 634.
-6. Shiu, P. K. et al. (2024). A *Drosophila* computational brain model reveals sensorimotor processing. *Nature* 634.
-7. Wang-Chen, S. et al. (2024). NeuroMechFly v2: simulating embodied sensorimotor control in adult *Drosophila*. *Nature Methods* 21, 2353–2362.
-8. von Reyn, C. R. et al. (2014). A spike-timing mechanism for action selection. *Nature Neuroscience* 17, 962–970.
-9. Ache, J. M. et al. (2019). Neural basis for looming size and velocity encoding in the *Drosophila* giant fiber escape pathway. *Current Biology* 29, 1073–1081.
-10. Ribeiro, I. M. A. et al. (2018). Visual projection neurons mediating directed courtship in *Drosophila*. *Cell* 174, 607–621.
-11. Rayshubskiy, A. et al. (2020). Neural control of steering in walking *Drosophila*. *bioRxiv*.
-12. Bidaye, S. S. et al. (2014). Neuronal control of *Drosophila* walking direction. *Science* 344, 97–101.
-13. von Philipsborn, A. C. et al. (2011). Neuronal control of *Drosophila* courtship song. *Neuron* 69, 509–522.
-14. Paquette, J. (2026). [Fly64: a fly brain model plays Super Mario 64](https://github.com/ornata/fly).
-15. Eon Systems (2026). [How the Eon team produced a virtual embodied fly](https://eon.systems/updates/embodied-brain-emulation).
-
-If you use the connectome data, cite reference 1 and follow the
-[MaleCNS attribution terms](https://male-cns.janelia.org/download/).
-
-## License
-
-The code in this repository is released under the [MIT License](LICENSE).
-
-The MaleCNS connectome data is **not** in the repository or the pip package. `flybrain build`
-downloads it from its source; `flybrain download` fetches files derived from it (the normalized
-weight matrix and neuron annotations). Both stay under the data's own [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license from
-FlyEM (HHMI Janelia) and collaborators.
+Bu proje MIT Lisansı altında sunulmaktadır.
