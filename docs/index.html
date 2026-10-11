@@ -3,28 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>FlyBrainGame — Live 3D Connectome Simulation</title>
-  <meta name="description" content="Playable 3D simulation of a fruit fly central nervous system (Janelia MaleCNS v1.0). 166,700 biological spiking neurons in a living ecosystem.">
+  <title>FlyBrainGame: Bir Sinegin Gunu - Drosophila Connectome 3D</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪰</text></svg>">
-  
-  <!-- Google Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
   <style>
-    :root {
-      --bg: #090d16;
-      --card-bg: rgba(15, 23, 42, 0.85);
-      --card-border: rgba(56, 189, 248, 0.2);
-      --accent-blue: #38bdf8;
-      --accent-green: #4ade80;
-      --accent-red: #f87171;
-      --accent-yellow: #facc15;
-      --text: #f1f5f9;
-      --text-dim: #94a3b8;
-    }
-
     * {
       box-sizing: border-box;
       margin: 0;
@@ -37,9 +22,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--bg);
-      font-family: 'Outfit', sans-serif;
-      color: var(--text);
+      background: rgb(122, 173, 224); /* Exact Panda3D clear sky color: 0.48, 0.68, 0.88 */
+      font-family: 'JetBrains Mono', monospace;
     }
 
     #webgl-canvas {
@@ -48,1055 +32,865 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
       display: block;
+      z-index: 1;
     }
 
-    /* Top Navigation Bar */
-    header {
+    /* Exact Panda3D OnScreenText Overlay */
+    #hud-overlay {
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.85), 0 0 4px rgba(0, 0, 0, 0.5);
+      line-height: 1.45;
+      font-size: 13.5px;
+      font-weight: 700;
+    }
+
+    .hud-line-title {
+      color: rgb(255, 217, 51); /* Vec4(1.0, 0.85, 0.2, 1.0) */
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+
+    .hud-line-perf {
+      color: rgb(77, 242, 102); /* Vec4(0.3, 0.95, 0.4, 1.0) */
+    }
+
+    .hud-line-physio {
+      color: rgb(51, 230, 255); /* Vec4(0.2, 0.9, 1.0, 1.0) */
+    }
+
+    .hud-line-life {
+      color: rgb(255, 255, 255);
+    }
+
+    .hud-line-decision {
+      color: rgb(128, 212, 255);
+      margin-top: 2px;
+    }
+
+    .hud-detailed-block {
+      margin-top: 6px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.25);
+      padding-top: 5px;
+      color: rgb(220, 235, 255);
+      font-size: 12.5px;
+    }
+
+    /* Bottom Keybindings Bar (Exact Panda3D text hint) */
+    #bottom-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 18px;
+      right: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+      font-size: 12px;
+      color: rgb(255, 255, 255);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+      font-weight: 700;
+    }
+
+    .touch-controls {
+      pointer-events: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .touch-btn {
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      transition: all 0.15s ease;
+    }
+
+    .touch-btn:hover, .touch-btn:active {
+      background: rgba(56, 189, 248, 0.8);
+      color: #000;
+      border-color: #38bdf8;
+    }
+
+    /* Game Over / Eaten Overlay (Exact Panda3D GameOverUI) */
+    #gameover-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      padding: 16px 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .brand {
-      pointer-events: auto;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      padding: 8px 16px;
-      border-radius: 999px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
-
-    .brand-icon {
-      font-size: 24px;
-      animation: float 2.5s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-4px); }
-    }
-
-    .brand-text h1 {
-      font-size: 16px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #fff, var(--accent-blue));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .brand-text span {
-      font-size: 11px;
-      font-family: 'JetBrains Mono', monospace;
-      color: var(--accent-green);
-    }
-
-    .header-actions {
-      pointer-events: auto;
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--card-border);
-      color: var(--text);
-      padding: 8px 16px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-    }
-
-    .btn:hover {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-blue);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      border-color: rgba(255,255,255,0.2);
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #38bdf8, #3b82f6);
-    }
-
-    /* HUD Telemetry Panel (Left) */
-    .hud-left {
-      position: absolute;
-      top: 80px;
-      left: 24px;
-      width: 280px;
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 16px;
-      z-index: 10;
-      pointer-events: auto;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-    }
-
-    .panel-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--accent-blue);
-      font-weight: 700;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .hud-metric {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-    }
-
-    .hud-label {
-      color: var(--text-dim);
-    }
-
-    .hud-value {
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .hud-progress-wrap {
-      width: 100%;
-      height: 6px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .hud-progress {
       height: 100%;
-      background: var(--accent-green);
-      width: 50%;
-      transition: width 0.3s ease;
-    }
-
-    /* Brain Spiking Oscilloscope (Right) */
-    .hud-right {
-      position: absolute;
-      top: 80px;
-      right: 24px;
-      width: 290px;
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 16px;
-      z-index: 10;
-      pointer-events: auto;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-    }
-
-    .neuron-bar {
-      display: flex;
+      background: rgba(10, 15, 20, 0.88);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-    }
-
-    .neuron-name {
-      width: 65px;
-      color: var(--text-dim);
-    }
-
-    .neuron-track {
-      flex: 1;
-      height: 8px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .neuron-fill {
-      height: 100%;
-      width: 20%;
-      background: var(--accent-blue);
-      border-radius: 4px;
-      transition: width 0.08s ease, background 0.15s ease;
-    }
-
-    .neuron-hz {
-      width: 45px;
-      text-align: right;
+      z-index: 50;
       color: #fff;
-      font-weight: 700;
-    }
-
-    .decision-badge {
-      display: inline-block;
-      width: 100%;
       text-align: center;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid var(--accent-blue);
-      color: var(--accent-blue);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 10px;
-      border-radius: 8px;
-      margin-top: 10px;
+      padding: 24px;
     }
 
-    /* Bottom Interactive Controls */
-    .bottom-controls {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
+    #gameover-overlay.visible {
       display: flex;
-      gap: 10px;
-      z-index: 10;
-      background: var(--card-bg);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--card-border);
-      padding: 8px 14px;
-      border-radius: 999px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
     }
 
-    .ctrl-btn {
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #fff;
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .ctrl-btn:hover {
-      background: rgba(56, 189, 248, 0.2);
-      border-color: var(--accent-blue);
-      transform: translateY(-2px);
-    }
-
-    .ctrl-btn.active {
-      background: var(--accent-blue);
-      color: #000;
-      border-color: var(--accent-blue);
-    }
-
-    /* Alert / Event Toast */
-    #event-toast {
-      position: absolute;
-      top: 140px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(239, 68, 68, 0.9);
-      color: #fff;
+    .go-title {
+      font-size: 32px;
+      color: rgb(244, 63, 94);
       font-weight: 800;
-      font-size: 15px;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .go-subtitle {
+      font-size: 16px;
+      color: rgb(255, 217, 51);
+      margin-bottom: 24px;
+    }
+
+    .go-stats {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 16px 24px;
+      border-radius: 8px;
+      line-height: 1.8;
+      font-size: 13.5px;
+      text-align: left;
+      margin-bottom: 24px;
+      width: 380px;
+      max-width: 90%;
+    }
+
+    .go-retry-btn {
+      background: rgb(56, 189, 248);
+      color: #000;
+      border: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 800;
       padding: 10px 24px;
-      border-radius: 999px;
-      box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
-      z-index: 20;
-      opacity: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+    }
+
+    /* 3D Floating Labels for Foods */
+    .billboard-label {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 2px 6px;
+      border-radius: 3px;
       pointer-events: none;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    #event-toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Mobile Adaptations */
-    @media (max-width: 840px) {
-      .hud-left {
-        width: 200px;
-        top: 70px;
-        left: 12px;
-        padding: 10px;
-      }
-      .hud-right {
-        width: 200px;
-        top: 70px;
-        right: 12px;
-        padding: 10px;
-      }
-      .bottom-controls {
-        bottom: 12px;
-        padding: 6px 10px;
-        gap: 6px;
-      }
-      .ctrl-btn {
-        padding: 8px 12px;
-        font-size: 11px;
-      }
-      .brand-text span {
-        display: none;
-      }
+      transform: translate(-50%, -100%);
+      white-space: nowrap;
+      z-index: 5;
     }
   </style>
 
-  <!-- Three.js & OrbitControls via CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-  <!-- WebGL Canvas -->
+  <!-- 3D Canvas -->
   <canvas id="webgl-canvas"></canvas>
 
-  <!-- Header Navigation -->
-  <header>
-    <div class="brand">
-      <div class="brand-icon">🪰</div>
-      <div class="brand-text">
-        <h1>FlyBrainGame</h1>
-        <span>166,700 MaleCNS Spiking LIF</span>
-      </div>
-    </div>
+  <!-- Exact Panda3D HUD Text Overlay -->
+  <div id="hud-overlay">
+    <div class="hud-line-title">FlyBrainGame | 'A Day in the Life of a Fly' Connectome Ecosystem</div>
+    <div class="hud-line-perf" id="hud-perf">FPS: 60.0 | Brain Step Hz: 26.5 (Latency: 37.7 ms)</div>
+    <div class="hud-line-physio" id="hud-physio">PHYSIO: ENERGY: [██████████] 100% | HUNGER:   0% | HYDRATION: [██████████] 100%</div>
+    <div class="hud-line-life" id="hud-life">LIFE: ALIVE: 0.0s | FOOD: 0 | DIST: 0.0m | LANDINGS: 0 | FROG ENCOUNTERS: 0</div>
+    <div class="hud-line-decision" id="hud-decision">DECISION: CRUISE_FORWARD [BIOLOGICAL-CONNECTOME]</div>
 
-    <div class="header-actions">
-      <a href="https://github.com/asiluzunoglu1216-gif/FlyBrainGame" target="_blank" class="btn btn-primary">
-        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
-        </svg>
-        ⭐ Star on GitHub
-      </a>
-    </div>
-  </header>
-
-  <!-- Left Telemetry HUD -->
-  <div class="hud-left">
-    <div class="panel-title">
-      <span>Physiology State</span>
-      <span style="color: var(--accent-green);">● ALIVE</span>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Lifespan</span>
-      <span class="hud-value" id="val-alive">0.0s</span>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Energy</span>
-      <span class="hud-value" id="val-energy">100%</span>
-    </div>
-    <div class="hud-progress-wrap">
-      <div class="hud-progress" id="bar-energy" style="width: 100%; background: var(--accent-green);"></div>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Hunger</span>
-      <span class="hud-value" id="val-hunger">15%</span>
-    </div>
-    <div class="hud-progress-wrap">
-      <div class="hud-progress" id="bar-hunger" style="width: 15%; background: var(--accent-yellow);"></div>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Food Ingested</span>
-      <span class="hud-value" id="val-food">0</span>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Landings</span>
-      <span class="hud-value" id="val-landings">0</span>
-    </div>
-
-    <div class="hud-metric">
-      <span class="hud-label">Escapes / Strikes</span>
-      <span class="hud-value" id="val-escapes" style="color: var(--accent-red);">0 / 0</span>
+    <div class="hud-detailed-block" id="hud-detailed" style="display: block;">
+      <div>SENSORY: LC4: <span id="val-lc4">1.8</span> Hz | LPLC2: <span id="val-lplc2">1.2</span> Hz | LC10a: <span id="val-lc10">0.0</span> Hz | ORN_DM: <span id="val-orn">18.2</span> Hz | TASTE: <span id="val-taste">0.0</span> Hz</div>
+      <div>MOTORS:  DNg100: <span id="val-dng">22.4</span> Hz | DNa02(L/R): <span id="val-dna-l">4.1</span>/<span id="val-dna-r">4.8</span> Hz | DNp01: <span id="val-dnp">0.0</span> Hz | MDN: 0.0 Hz</div>
+      <div>PROBOSCIS: [<span id="bar-proboscis">░░░░░░░░░░</span>] <span id="val-proboscis">0</span>% | MEMORY: <span style="color: #4df266;">38 MBON SYNAPSES ACTIVE</span></div>
     </div>
   </div>
 
-  <!-- Right Neural Firing Oscilloscope -->
-  <div class="hud-right">
-    <div class="panel-title">
-      <span>Connectome Motors (Hz)</span>
-      <span id="val-brain-hz" style="color: var(--accent-blue);">50 Hz</span>
-    </div>
+  <!-- Floating 3D Food Labels Container -->
+  <div id="food-labels"></div>
 
-    <div class="neuron-bar">
-      <span class="neuron-name">DNg100</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-thrust" style="width: 35%; background: var(--accent-blue);"></div></div>
-      <span class="neuron-hz" id="hz-thrust">18 Hz</span>
+  <!-- Bottom Keybindings & Controls Hint -->
+  <div id="bottom-bar">
+    <div>[F] Camera Toggle (CHASE / SPECTATOR) | [F4] Toggle Detailed HUD | [R] Retry | [Space] Safety Reset</div>
+    <div class="touch-controls">
+      <button class="touch-btn" id="btn-cam">Toggle Cam [F]</button>
+      <button class="touch-btn" id="btn-food">Spawn Food</button>
+      <button class="touch-btn" id="btn-frog">Frog Strike</button>
+      <button class="touch-btn" id="btn-retry">Retry [R]</button>
     </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">DNa02 L</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-steer-l" style="width: 10%; background: #38bdf8;"></div></div>
-      <span class="neuron-hz" id="hz-steer-l">4 Hz</span>
-    </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">DNa02 R</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-steer-r" style="width: 12%; background: #38bdf8;"></div></div>
-      <span class="neuron-hz" id="hz-steer-r">5 Hz</span>
-    </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">LC4 Loom</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-lc4" style="width: 5%; background: var(--accent-red);"></div></div>
-      <span class="neuron-hz" id="hz-lc4">2 Hz</span>
-    </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">DNp01 GF</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-dnp01" style="width: 2%; background: #f43f5e;"></div></div>
-      <span class="neuron-hz" id="hz-dnp01">0 Hz</span>
-    </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">ORN Odor</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-orn" style="width: 45%; background: var(--accent-green);"></div></div>
-      <span class="neuron-hz" id="hz-orn">22 Hz</span>
-    </div>
-
-    <div class="neuron-bar">
-      <span class="neuron-name">Proboscis</span>
-      <div class="neuron-track"><div class="neuron-fill" id="n-proboscis" style="width: 0%; background: var(--accent-yellow);"></div></div>
-      <span class="neuron-hz" id="hz-proboscis">0%</span>
-    </div>
-
-    <div class="decision-badge" id="val-decision">CRUISE_FORWARD</div>
   </div>
 
-  <!-- Bottom Interaction Toolbar -->
-  <div class="bottom-controls">
-    <button class="ctrl-btn" id="btn-camera">
-      🎥 <span id="cam-label">Chase Camera</span>
-    </button>
-    <button class="ctrl-btn" id="btn-spawn-food">
-      🍎 Spawn Food
-    </button>
-    <button class="ctrl-btn" id="btn-frog-strike" style="border-color: rgba(248, 113, 113, 0.4);">
-      🐸 Trigger Frog Strike
-    </button>
-    <button class="ctrl-btn" id="btn-reset">
-      🔄 Reincarnate
-    </button>
+  <!-- Game Over Screen -->
+  <div id="gameover-overlay">
+    <div class="go-title">FLY EATEN!</div>
+    <div class="go-subtitle">A frog predator caught you near the pond.</div>
+    <div class="go-stats" id="go-stats-text">
+      LIFESPAN: 42.5s<br>
+      FOOD INGESTED: 2<br>
+      DISTANCE TRAVELED: 185.4m<br>
+      TOTAL LANDINGS: 3<br>
+      FROG ENCOUNTERS: 2 (1 Escape)<br>
+      MUSHROOM BODY MEMORIES PERSISTED TO DISK
+    </div>
+    <button class="go-retry-btn" id="btn-retry-go">REINCARNATE & RETRY [R]</button>
   </div>
 
-  <!-- Event Toast Banner -->
-  <div id="event-toast">⚡ GIANT FIBER ESCAPE TRIGGERED! ⚡</div>
-
-  <!-- Main 3D Simulation Logic -->
   <script>
-    // --- 1. Scene, Camera, Lighting & Renderer Setup ---
+    // --- 1. Scene, Renderer, and Lighting Setup (Exact Panda3D Parameters) ---
     const canvas = document.getElementById('webgl-canvas');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Sky blue
-    scene.fog = new THREE.FogExp2(0x87CEEB, 0.007);
 
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 15, 25);
+    // Exact Panda3D sky daylight blue: self.setBackgroundColor(0.48, 0.68, 0.88, 1.0)
+    const skyColor = new THREE.Color(0.48, 0.68, 0.88);
+    scene.background = skyColor;
+    scene.fog = new THREE.Fog(skyColor, 60, 220);
 
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't clip below ground
+    // Exact Panda3D Lights: AmbientLight Vec4(0.45, 0.48, 0.52) & Sun Vec4(0.92, 0.90, 0.82)
+    const ambLight = new THREE.AmbientLight(new THREE.Color(0.45, 0.48, 0.52), 1.0);
+    scene.add(ambLight);
 
-    // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3d5a28, 0.6);
-    scene.add(hemiLight);
-
-    const dirLight = new THREE.DirectionalLight(0xfff7e6, 1.2);
-    dirLight.position.set(50, 80, 40);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.near = 10;
-    dirLight.shadow.camera.far = 200;
-    dirLight.shadow.camera.left = -60;
-    dirLight.shadow.camera.right = 60;
-    dirLight.shadow.camera.top = 60;
-    dirLight.shadow.camera.bottom = -60;
+    const dirLight = new THREE.DirectionalLight(new THREE.Color(0.92, 0.90, 0.82), 1.25);
+    dirLight.position.set(-40, 70, 50);
     scene.add(dirLight);
 
-    // --- 2. Environment (Natural Terrain, Pond, Trees, Rocks) ---
-    // Ground
-    const groundGeo = new THREE.PlaneGeometry(240, 240, 64, 64);
-    // Simple hill deformations
-    const pos = groundGeo.attributes.position;
-    for (let i = 0; i < pos.count; i++) {
-      const vx = pos.getX(i);
-      const vy = pos.getY(i);
-      // Gentle rolling hills outside the pond
-      const distToCenter = Math.sqrt(vx * vx + vy * vy);
-      let height = Math.sin(vx * 0.05) * Math.cos(vy * 0.05) * 2.5;
-      if (distToCenter < 25) {
-        height = -1.2; // Pond basin
-      }
-      pos.setZ(i, height);
+    // Box creation helper (1:1 identical to Panda3D create_cube_geom)
+    function createBox(sx, sy, sz, colorHex, opacity = 1.0) {
+      const geo = new THREE.BoxGeometry(sx, sz, sy); // Panda3D Z is up, Three.js Y is up
+      const mat = new THREE.MeshLambertMaterial({
+        color: colorHex,
+        transparent: opacity < 1.0,
+        opacity: opacity
+      });
+      return new THREE.Mesh(geo, mat);
     }
-    groundGeo.computeVertexNormals();
 
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x4f772d,
-      roughness: 0.9,
-      metalness: 0.1,
-      flatShading: true
+    // --- 2. Natural World Terrain (1:1 with game/natural_world.py) ---
+    const worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    // Flat Base Meadow Ground: Vec4(0.24, 0.48, 0.20, 1.0)
+    const ground = createBox(240, 240, 1.0, 0x3d7a33);
+    ground.position.set(0, -0.5, 0);
+    worldGroup.add(ground);
+
+    // Rolling Hills: Vec4(0.28, 0.52, 0.22, 1.0)
+    const hillColor = 0x478538;
+    const hillsData = [
+      { pos: [-65, 3.0, -55], size: [45.0, 40.0, 6.0] },
+      { pos: [60, 4.0, -65], size: [50.0, 45.0, 8.0] },
+      { pos: [75, 3.5, 55], size: [42.0, 42.0, 7.0] },
+      { pos: [-70, 2.5, 60], size: [38.0, 38.0, 5.0] },
+    ];
+    hillsData.forEach(h => {
+      const hill = createBox(h.size[0], h.size[1], h.size[2], hillColor);
+      hill.position.set(h.pos[0], h.pos[1], -h.pos[2]);
+      worldGroup.add(hill);
     });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
 
-    // Pond Water
-    const waterGeo = new THREE.CircleGeometry(22, 32);
-    const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x2b6cb0,
-      roughness: 0.1,
-      metalness: 0.8,
-      transparent: true,
-      opacity: 0.85
-    });
-    const water = new THREE.Mesh(waterGeo, waterMat);
-    water.rotation.x = -Math.PI / 2;
-    water.position.y = -0.2;
-    scene.add(water);
+    // Tranquil Blue Pond: Vec4(0.22, 0.55, 0.85, 0.95) at (-25.0, -40.0)
+    const pond = createBox(38.0, 28.0, 0.4, 0x388cd9, 0.95);
+    pond.position.set(-25.0, 0.05, 40.0);
+    worldGroup.add(pond);
 
-    // Trees & Rocks Helper
-    function createTree(x, z) {
+    // Trees (game/natural_world.py _build_trees)
+    const c_trunk = 0x6b4729;        // Vec4(0.42, 0.28, 0.16)
+    const c_foliage = 0x2e942e;      // Vec4(0.18, 0.58, 0.18)
+    const c_foliage_light = 0x40a638;// Vec4(0.25, 0.65, 0.22)
+    const treeSpecs = [
+      { x: 15.0, y: -25.0, h: 14.0, r: 1.8 },
+      { x: -40.0, y: 35.0, h: 16.0, r: 2.0 },
+      { x: 45.0, y: 35.0, h: 12.0, r: 1.6 },
+      { x: -10.0, y: 35.0, h: 15.0, r: 1.9 },
+      { x: 35.0, y: -45.0, h: 13.0, r: 1.7 },
+      { x: -55.0, y: -20.0, h: 15.0, r: 1.8 },
+    ];
+
+    treeSpecs.forEach(t => {
       const tree = new THREE.Group();
-      const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 6, 6);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, flatShading: true });
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = 3;
-      trunk.castShadow = true;
+      // Trunk
+      const trunk = createBox(t.r * 2, t.r * 2, t.h, c_trunk);
+      trunk.position.set(0, t.h * 0.5, 0);
       tree.add(trunk);
 
-      const crownGeo = new THREE.DodecahedronGeometry(3.5, 1);
-      const crownMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, flatShading: true });
-      const crown = new THREE.Mesh(crownGeo, crownMat);
-      crown.position.y = 7;
-      crown.castShadow = true;
-      tree.add(crown);
+      // Branch
+      const branch = createBox(6.0, 0.9, 0.7, c_trunk);
+      branch.position.set(2.7, t.h * 0.55, 0);
+      tree.add(branch);
 
-      tree.position.set(x, 0, z);
-      scene.add(tree);
-    }
+      // Tier 1 Foliage
+      const tier1 = createBox(10.0, 10.0, 6.0, c_foliage);
+      tier1.position.set(0, t.h + 2.0, 0);
+      tree.add(tier1);
 
-    function createRock(x, z, scale) {
-      const rockGeo = new THREE.DodecahedronGeometry(scale, 1);
-      const rockMat = new THREE.MeshStandardMaterial({ color: 0x718096, flatShading: true });
-      const rock = new THREE.Mesh(rockGeo, rockMat);
-      rock.position.set(x, scale * 0.4, z);
-      rock.castShadow = true;
-      rock.receiveShadow = true;
-      scene.add(rock);
-    }
+      // Tier 2 Foliage
+      const tier2 = createBox(6.5, 6.5, 5.0, c_foliage_light);
+      tier2.position.set(0, t.h + 6.0, 0);
+      tree.add(tier2);
 
-    // Populate scenery
-    for (let i = 0; i < 28; i++) {
-      const angle = (i / 28) * Math.PI * 2;
-      const radius = 35 + Math.sin(i * 3) * 20;
-      createTree(Math.cos(angle) * radius, Math.sin(angle) * radius);
-    }
-    createRock(-15, 12, 2.5);
-    createRock(18, -14, 3.2);
-    createRock(-20, -18, 2.0);
-
-    // --- 3. Fruit System (Food Items) ---
-    const fruits = [];
-    function createFruit(type, x, y, z) {
-      const group = new THREE.Group();
-      let color = 0xef4444; // Apple red
-      let geo = new THREE.SphereGeometry(1.2, 16, 16);
-      if (type === 'banana') {
-        color = 0xfacc15;
-        geo = new THREE.CylinderGeometry(0.5, 0.6, 2.8, 12);
-        geo.rotateZ(Math.PI / 4);
-      } else if (type === 'plum') {
-        color = 0x8b5cf6;
-      }
-      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.1 });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
-      group.add(mesh);
-
-      // Scent particles ring
-      const ringGeo = new THREE.TorusGeometry(2.0, 0.08, 8, 24);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.4 });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.x = Math.PI / 2;
-      group.add(ring);
-      group.userData = { ring, eaten: false, type };
-
-      group.position.set(x, y, z);
-      scene.add(group);
-      fruits.push(group);
-      return group;
-    }
-
-    createFruit('apple', 10, 0.8, -10);
-    createFruit('banana', -16, 0.8, 8);
-    createFruit('plum', 5, 0.8, 18);
-
-    // --- 4. The 3D Fruit Fly Model (Drosophila) ---
-    const flyGroup = new THREE.Group();
-
-    // Fly Body Parts
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.5 });
-    const eyeMat = new THREE.MeshStandardMaterial({ color: 0xd90429, roughness: 0.2 }); // Compound red eyes
-    const wingMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.65,
-      roughness: 0.1,
-      metalness: 0.9,
-      side: THREE.DoubleSide
+      tree.position.set(t.x, 0, -t.y);
+      worldGroup.add(tree);
     });
 
-    // Thorax
-    const thoraxGeo = new THREE.SphereGeometry(0.8, 16, 16);
-    thoraxGeo.scale(1, 0.9, 1.2);
-    const thorax = new THREE.Mesh(thoraxGeo, bodyMat);
-    thorax.castShadow = true;
-    flyGroup.add(thorax);
+    // Rocks (game/natural_world.py _build_rocks)
+    const rockSpecs = [
+      { pos: [-35.0, 15.0, 1.6], size: [7.0, 6.0, 3.2], col: 0x8c9499 },
+      { pos: [-50.0, -10.0, 2.0], size: [9.0, 8.0, 4.0], col: 0x737a80 },
+      { pos: [25.0, -12.0, 1.2], size: [6.0, 5.0, 2.4], col: 0x8c9499 },
+      { pos: [-18.0, -28.0, 1.5], size: [5.5, 5.0, 3.0], col: 0x737a80 },
+      { pos: [55.0, 10.0, 2.5], size: [10.0, 8.0, 5.0], col: 0x8c9499 },
+    ];
+    rockSpecs.forEach(r => {
+      const rock = createBox(r.size[0], r.size[1], r.size[2], r.col);
+      rock.position.set(r.pos[0], r.pos[2], -r.pos[1]);
+      worldGroup.add(rock);
+    });
 
-    // Abdomen (Striped)
-    const abdomenGeo = new THREE.SphereGeometry(1.0, 16, 16);
-    abdomenGeo.scale(0.8, 0.7, 1.6);
-    const abdomen = new THREE.Mesh(abdomenGeo, new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 }));
-    abdomen.position.set(0, -0.1, -1.8);
-    abdomen.castShadow = true;
-    flyGroup.add(abdomen);
-
-    // Head
-    const headGeo = new THREE.SphereGeometry(0.65, 16, 16);
-    headGeo.scale(1.2, 0.9, 0.9);
-    const head = new THREE.Mesh(headGeo, bodyMat);
-    head.position.set(0, 0.15, 1.2);
-    head.castShadow = true;
-    flyGroup.add(head);
-
-    // Left & Right Red Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.42, 14, 14);
-    const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-    leftEye.position.set(0.55, 0.25, 1.35);
-    flyGroup.add(leftEye);
-
-    const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-    rightEye.position.set(-0.55, 0.25, 1.35);
-    flyGroup.add(rightEye);
-
-    // Proboscis (Mouthparts)
-    const proboscisGeo = new THREE.CylinderGeometry(0.1, 0.15, 1.2, 8);
-    const proboscisMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
-    const proboscis = new THREE.Mesh(proboscisGeo, proboscisMat);
-    proboscis.position.set(0, -0.6, 1.2);
-    proboscis.rotation.x = Math.PI / 4;
-    flyGroup.add(proboscis);
-
-    // Wings
-    const wingGeo = new THREE.PlaneGeometry(1.6, 3.2);
-    wingGeo.translate(0, 1.6, 0); // Pivot at wing root
-    wingGeo.rotateX(-Math.PI / 2);
-
-    const leftWing = new THREE.Mesh(wingGeo, wingMat);
-    leftWing.position.set(0.6, 0.6, 0.2);
-    leftWing.castShadow = true;
-    flyGroup.add(leftWing);
-
-    const rightWing = new THREE.Mesh(wingGeo, wingMat);
-    rightWing.position.set(-0.6, 0.6, 0.2);
-    rightWing.castShadow = true;
-    flyGroup.add(rightWing);
-
-    flyGroup.position.set(0, 8, 12);
+    // --- 3. Exact Fruit Fly Model (1:1 with game/fly_model.py) ---
+    const flyGroup = new THREE.Group();
     scene.add(flyGroup);
 
-    // --- 5. Predator Frog Entity (Kermit) ---
-    const frogGroup = new THREE.Group();
-    const frogBodyGeo = new THREE.SphereGeometry(2.5, 16, 16);
-    frogBodyGeo.scale(1.2, 0.8, 1.4);
-    const frogMat = new THREE.MeshStandardMaterial({ color: 0x386641, roughness: 0.8 });
-    const frogBody = new THREE.Mesh(frogBodyGeo, frogMat);
-    frogBody.castShadow = true;
-    frogGroup.add(frogBody);
+    const c_thorax = 0x9e703d;  // Vec4(0.62, 0.44, 0.24) Amber brown
+    const c_head = 0x8c6133;    // Vec4(0.55, 0.38, 0.20)
+    const c_eye = 0xe01f1f;     // Vec4(0.88, 0.12, 0.12) Ruby red
+    const c_leg = 0x33261a;
+    const c_prob = 0xb38552;
+    const c_labellum = 0xd94d4d;
 
-    // Frog Eyes
-    const frogEyeGeo = new THREE.SphereGeometry(0.65, 12, 12);
-    const frogEyeMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.1 });
-    const fLeftEye = new THREE.Mesh(frogEyeGeo, frogEyeMat);
-    fLeftEye.position.set(1.4, 1.4, 1.0);
-    frogGroup.add(fLeftEye);
+    // 1. Thorax box: (1.4, 2.0, 1.2)
+    const thorax = createBox(1.4, 2.0, 1.2, c_thorax);
+    flyGroup.add(thorax);
 
-    const fRightEye = new THREE.Mesh(frogEyeGeo, frogEyeMat);
-    fRightEye.position.set(-1.4, 1.4, 1.0);
-    frogGroup.add(fRightEye);
+    // 2. Head box: (1.2, 1.0, 1.0)
+    const head = createBox(1.2, 1.0, 1.0, c_head);
+    head.position.set(0, 0.1, 1.4);
+    flyGroup.add(head);
 
-    // Frog Tongue (Extensible Cylinder)
-    const tongueGeo = new THREE.CylinderGeometry(0.3, 0.35, 1, 8);
-    const tongueMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.3 });
-    const tongue = new THREE.Mesh(tongueGeo, tongueMat);
-    tongue.visible = false;
-    frogGroup.add(tongue);
+    // 3. Red Compound Eyes: (0.5, 0.7, 0.7)
+    const eyeL = createBox(0.5, 0.7, 0.7, c_eye);
+    eyeL.position.set(-0.55, 0.1, 0.1);
+    head.add(eyeL);
 
-    frogGroup.position.set(-14, 0.5, -6);
-    scene.add(frogGroup);
+    const eyeR = createBox(0.5, 0.7, 0.7, c_eye);
+    eyeR.position.set(0.55, 0.1, 0.1);
+    head.add(eyeR);
 
-    // --- 6. Physics & Biological Connectome Simulation ---
-    const state = {
-      aliveTime: 0,
-      hunger: 15,
+    // 4. Antennae
+    const antL = createBox(0.12, 0.35, 0.12, 0x594026);
+    antL.position.set(-0.25, 0.25, 0.55);
+    antL.rotation.y = -0.35;
+    head.add(antL);
+
+    const antR = createBox(0.12, 0.35, 0.12, 0x594026);
+    antR.position.set(0.25, 0.25, 0.55);
+    antR.rotation.y = 0.35;
+    head.add(antR);
+
+    // 5. Articulated Proboscis
+    const proboscisPivot = new THREE.Group();
+    proboscisPivot.position.set(0, -0.45, 0.25);
+    head.add(proboscisPivot);
+
+    const probStem = createBox(0.25, 0.25, 0.65, c_prob);
+    probStem.position.set(0, -0.32, 0);
+    proboscisPivot.add(probStem);
+
+    const labellum = createBox(0.40, 0.35, 0.20, c_labellum);
+    labellum.position.set(0, -0.35, 0.05);
+    probStem.add(labellum);
+
+    // 6. Segmented Abdomen (5 segments alternating amber & dark stripes)
+    const abdomenGroup = new THREE.Group();
+    abdomenGroup.position.set(0, -0.05, -1.0);
+    flyGroup.add(abdomenGroup);
+
+    const segColors = [0x8c6133, 0x2e1f14, 0x8c6133, 0x2e1f14, 0x8c6133];
+    const segSizes = [
+      [1.3, 0.6, 1.0],
+      [1.25, 0.6, 0.95],
+      [1.15, 0.6, 0.90],
+      [0.95, 0.6, 0.80],
+      [0.70, 0.5, 0.60]
+    ];
+    let currZ = -0.3;
+    segSizes.forEach((sz, idx) => {
+      const seg = createBox(sz[0], sz[1], sz[2], segColors[idx]);
+      seg.position.set(0, 0, currZ);
+      abdomenGroup.add(seg);
+      currZ -= sz[1] * 0.9;
+    });
+
+    // 7. Translucent Wings (Thin fan planes)
+    function makeWing(isLeft) {
+      const wingGeo = new THREE.PlaneGeometry(1.6, 4.5);
+      wingGeo.translate(isLeft ? 0.7 : -0.7, 2.25, 0);
+      wingGeo.rotateX(-Math.PI / 2);
+      const wingMat = new THREE.MeshLambertMaterial({
+        color: 0xd9ebff,
+        transparent: true,
+        opacity: 0.65,
+        side: THREE.DoubleSide
+      });
+      return new THREE.Mesh(wingGeo, wingMat);
+    }
+
+    const wingPivotL = new THREE.Group();
+    wingPivotL.position.set(-0.65, 0.55, 0.1);
+    flyGroup.add(wingPivotL);
+    const wingL = makeWing(true);
+    wingPivotL.add(wingL);
+
+    const wingPivotR = new THREE.Group();
+    wingPivotR.position.set(0.65, 0.55, 0.1);
+    flyGroup.add(wingPivotR);
+    const wingR = makeWing(false);
+    wingPivotR.add(wingR);
+
+    // 8. Six Jointed Legs
+    for (let side of [-1, 1]) {
+      [-0.4, 0.0, 0.4].forEach(offsetZ => {
+        const leg = createBox(0.15, 0.15, 0.9, c_leg);
+        leg.position.set(side * 0.75, -0.6, offsetZ);
+        leg.rotation.z = side * 0.35;
+        flyGroup.add(leg);
+      });
+    }
+
+    flyGroup.position.set(0, 7.5, 0);
+
+    // --- 4. Frog Predators (Exact Panda3D FrogEntity) ---
+    const frogs = [];
+    function createFrog(name, x, z, scale = 1.6) {
+      const frog = new THREE.Group();
+      const c_skin = 0x389e2e;
+      const c_belly = 0xc7e07a;
+      const c_feye = 0xf2d919;
+      const c_pupil = 0x0d0d0d;
+
+      // Body
+      const body = createBox(2.2 * scale, 2.6 * scale, 1.4 * scale, c_skin);
+      body.position.y = 0.7 * scale;
+      frog.add(body);
+
+      // Belly
+      const belly = createBox(1.8 * scale, 2.2 * scale, 0.3 * scale, c_belly);
+      belly.position.y = 0.2 * scale;
+      frog.add(belly);
+
+      // Eyes
+      [-0.8, 0.8].forEach(sx => {
+        const feye = createBox(0.6 * scale, 0.6 * scale, 0.6 * scale, c_feye);
+        feye.position.set(sx * scale, 1.5 * scale, 0.8 * scale);
+        const pupil = createBox(0.2 * scale, 0.62 * scale, 0.4 * scale, c_pupil);
+        feye.add(pupil);
+        frog.add(feye);
+      });
+
+      // Tongue Beam & Tip
+      const tongueGroup = new THREE.Group();
+      const tongueStem = createBox(0.5 * scale, 1.0, 0.4 * scale, 0xf53861);
+      tongueStem.position.z = 0.5;
+      tongueGroup.add(tongueStem);
+
+      const tongueTip = createBox(0.7 * scale, 0.7 * scale, 0.6 * scale, 0xff1a40);
+      tongueTip.position.z = 1.0;
+      tongueGroup.add(tongueTip);
+      tongueGroup.visible = false;
+      frog.add(tongueGroup);
+
+      frog.position.set(x, 0.5, z);
+      scene.add(frog);
+
+      frogs.push({
+        group: frog,
+        tongue: tongueGroup,
+        tongueStem: tongueStem,
+        tongueTip: tongueTip,
+        name: name,
+        state: 'IDLE',
+        strikeTimer: 0,
+        scale: scale
+      });
+    }
+
+    createFrog("Kermit_Pond", -45.0, 50.0, 1.7);
+    createFrog("Bullfrog_Marsh", -55.0, 60.0, 1.9);
+    createFrog("Treefrog_Rock", 45.0, 55.0, 1.5);
+
+    // --- 5. Food System (Apples, Bananas, etc. with Floating 3D Text) ---
+    const foods = [
+      { name: "APPLE", col: 0xeb2626, size: [1.4, 1.4, 1.3], pos: [14.0, 0.8, -16.0] },
+      { name: "BANANA", col: 0xf2d91f, size: [0.7, 2.2, 0.7], pos: [-18.0, 0.8, -22.0] },
+      { name: "STRAWBERRY", col: 0xe61a40, size: [1.1, 1.1, 1.4], pos: [22.0, 0.8, 12.0] },
+      { name: "GRAPES", col: 0x8c26b3, size: [1.3, 1.3, 1.3], pos: [-35.0, 3.2, -15.0] },
+      { name: "PEACH", col: 0xfa8c47, size: [1.4, 1.4, 1.4], pos: [40.0, 0.8, 30.0] }
+    ];
+
+    const foodLabelsContainer = document.getElementById('food-labels');
+    foods.forEach(f => {
+      const mesh = createBox(f.size[0], f.size[1], f.size[2], f.col);
+      mesh.position.set(f.pos[0], f.pos[1], f.pos[2]);
+      scene.add(mesh);
+      f.mesh = mesh;
+
+      const label = document.createElement('div');
+      label.className = 'billboard-label';
+      label.textContent = f.name;
+      foodLabelsContainer.appendChild(label);
+      f.labelEl = label;
+      f.active = true;
+    });
+
+    // --- 6. Live Simulation State & Telemetry ---
+    const sim = {
+      alive: 0,
       energy: 100,
-      foodEaten: 0,
+      hunger: 0,
+      food: 0,
       landings: 0,
+      encounters: 0,
       escapes: 0,
-      frogStrikes: 0,
+      dist: 0,
       isLanded: false,
-      cameraMode: 'chase', // 'chase' or 'orbit'
-      
-      // Motion
-      flySpeed: 0.25,
+      cameraMode: 'CHASE', // 'CHASE' or 'SPECTATOR'
+      gameOver: false,
+
+      // Kinematics
+      speed: 0.28,
       yaw: 0,
-      pitch: 0,
-      roll: 0,
-      wingPhase: 0,
+      wingCycle: 0,
       proboscisExt: 0,
 
-      // Neural Firing Rates (Hz)
-      dng100: 22,
-      dna02_l: 4,
-      dna02_r: 4,
-      lc4: 2,
-      dnp01: 0,
-      orn: 18,
-      proboscisHz: 0,
-      decision: 'CRUISE_FORWARD',
-
-      // Frog State
-      frogState: 'IDLE', // IDLE, AIM, STRIKE, RETRACT
-      tongueProgress: 0
+      // Connectome Firing Rates
+      dng100: 22.4,
+      dna02_l: 4.1,
+      dna02_r: 4.8,
+      lc4: 1.8,
+      lplc2: 1.2,
+      lc10: 0.0,
+      dnp01: 0.0,
+      orn: 18.2,
+      taste: 0.0,
+      decision: "CRUISE_FORWARD"
     };
 
-    // --- UI Elements ---
-    const ui = {
-      alive: document.getElementById('val-alive'),
-      energy: document.getElementById('val-energy'),
-      barEnergy: document.getElementById('bar-energy'),
-      hunger: document.getElementById('val-hunger'),
-      barHunger: document.getElementById('bar-hunger'),
-      food: document.getElementById('val-food'),
-      landings: document.getElementById('val-landings'),
-      escapes: document.getElementById('val-escapes'),
-      decision: document.getElementById('val-decision'),
-
-      hzThrust: document.getElementById('hz-thrust'),
-      nThrust: document.getElementById('n-thrust'),
-      hzSteerL: document.getElementById('hz-steer-l'),
-      nSteerL: document.getElementById('n-steer-l'),
-      hzSteerR: document.getElementById('hz-steer-r'),
-      nSteerR: document.getElementById('n-steer-r'),
-      hzLc4: document.getElementById('hz-lc4'),
-      nLc4: document.getElementById('n-lc4'),
-      hzDnp01: document.getElementById('hz-dnp01'),
-      nDnp01: document.getElementById('n-dnp01'),
-      hzOrn: document.getElementById('hz-orn'),
-      nOrn: document.getElementById('n-orn'),
-      hzProboscis: document.getElementById('hz-proboscis'),
-      nProboscis: document.getElementById('n-proboscis'),
-
-      toast: document.getElementById('event-toast'),
-      camLabel: document.getElementById('cam-label')
-    };
-
-    function showToast(msg, bg = 'rgba(239, 68, 68, 0.9)') {
-      ui.toast.textContent = msg;
-      ui.toast.style.background = bg;
-      ui.toast.classList.add('show');
-      setTimeout(() => ui.toast.classList.remove('show'), 2400);
+    // Helper: ASCII Progress Bar [████░░░░░░] (Exact Panda3D make_bar)
+    function makeBar(val, len = 10) {
+      const clamped = Math.max(0, Math.min(1, val));
+      const filled = Math.round(clamped * len);
+      return "█".repeat(filled) + "░".repeat(len - filled);
     }
 
-    // --- Interaction Buttons ---
-    document.getElementById('btn-camera').addEventListener('click', () => {
-      state.cameraMode = state.cameraMode === 'chase' ? 'orbit' : 'chase';
-      ui.camLabel.textContent = state.cameraMode === 'chase' ? 'Chase Camera' : 'Free Orbit';
-      controls.enabled = (state.cameraMode === 'orbit');
+    // --- 7. Controls & Keyboard Handlers ---
+    window.addEventListener('keydown', e => {
+      const k = e.key.toLowerCase();
+      if (k === 'f') toggleCamera();
+      if (k === 'f4') toggleDetailedHud();
+      if (k === 'r') reincarnate();
+      if (k === ' ') safetyReset();
     });
 
-    document.getElementById('btn-spawn-food').addEventListener('click', () => {
-      // Spawn fresh fruit directly ahead of fly
-      const fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
-      const spawnPos = flyGroup.position.clone().add(fwd.multiplyScalar(15));
-      spawnPos.y = 0.8;
-      createFruit('apple', spawnPos.x, spawnPos.y, spawnPos.z);
-      showToast('🍎 Fresh fruit spawned! Odor tracking active.', 'rgba(34, 197, 94, 0.9)');
-    });
+    document.getElementById('btn-cam').addEventListener('click', toggleCamera);
+    document.getElementById('btn-food').addEventListener('click', spawnFoodNear);
+    document.getElementById('btn-frog').addEventListener('click', triggerNearestFrog);
+    document.getElementById('btn-retry').addEventListener('click', reincarnate);
+    document.getElementById('btn-retry-go').addEventListener('click', reincarnate);
 
-    document.getElementById('btn-frog-strike').addEventListener('click', () => {
-      triggerFrogStrike();
-    });
-
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      flyGroup.position.set(0, 8, 12);
-      state.flySpeed = 0.25;
-      state.energy = 100;
-      state.hunger = 15;
-      state.isLanded = false;
-      showToast('🔄 Fly reincarnated with preserved memories!', 'rgba(56, 189, 248, 0.9)');
-    });
-
-    function triggerFrogStrike() {
-      if (state.frogState !== 'IDLE') return;
-      state.frogStrikes++;
-      state.frogState = 'AIM';
-      frogGroup.lookAt(flyGroup.position.x, frogGroup.position.y, flyGroup.position.z);
-      setTimeout(() => {
-        state.frogState = 'STRIKE';
-        state.tongueProgress = 0;
-      }, 350);
+    function toggleCamera() {
+      sim.cameraMode = sim.cameraMode === 'CHASE' ? 'SPECTATOR' : 'CHASE';
     }
 
-    // --- 7. Main Animation & Game Loop ---
+    let detailedVisible = true;
+    function toggleDetailedHud() {
+      detailedVisible = !detailedVisible;
+      document.getElementById('hud-detailed').style.display = detailedVisible ? 'block' : 'none';
+    }
+
+    function safetyReset() {
+      flyGroup.position.set(0, 8.0, 0);
+      sim.speed = 0.28;
+      sim.isLanded = false;
+    }
+
+    function spawnFoodNear() {
+      const fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), sim.yaw);
+      const spawnP = flyGroup.position.clone().add(fwd.multiplyScalar(14));
+      spawnP.y = 0.8;
+      const newFood = {
+        name: "APPLE",
+        col: 0xeb2626,
+        size: [1.4, 1.4, 1.3],
+        pos: [spawnP.x, spawnP.y, spawnP.z],
+        active: true
+      };
+      const mesh = createBox(1.4, 1.4, 1.3, 0xeb2626);
+      mesh.position.copy(spawnP);
+      scene.add(mesh);
+      newFood.mesh = mesh;
+
+      const label = document.createElement('div');
+      label.className = 'billboard-label';
+      label.textContent = "APPLE";
+      foodLabelsContainer.appendChild(label);
+      newFood.labelEl = label;
+      foods.push(newFood);
+    }
+
+    function triggerNearestFrog() {
+      const frog = frogs[0];
+      if (frog.state === 'IDLE') {
+        frog.state = 'STRIKE';
+        frog.strikeTimer = 0;
+        sim.encounters++;
+      }
+    }
+
+    function reincarnate() {
+      document.getElementById('gameover-overlay').classList.remove('visible');
+      safetyReset();
+      sim.alive = 0;
+      sim.energy = 100;
+      sim.hunger = 0;
+      sim.food = 0;
+      sim.dist = 0;
+      sim.landings = 0;
+      sim.encounters = 0;
+      sim.escapes = 0;
+      sim.gameOver = false;
+      sim.decision = "CRUISE_FORWARD";
+    }
+
+    // --- 8. Simulation Update Loop ---
     let lastTime = performance.now();
 
-    function animate() {
-      requestAnimationFrame(animate);
+    function update() {
+      requestAnimationFrame(update);
       const now = performance.now();
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
 
-      state.aliveTime += dt;
-      state.hunger = Math.min(100, state.hunger + dt * 0.4);
+      if (sim.gameOver) return;
 
-      // --- Odor Sensing & Tropotaxis ---
-      let nearestFruit = null;
-      let minDist = 9999;
-      for (const fruit of fruits) {
-        if (fruit.userData.eaten) continue;
-        const d = flyGroup.position.distanceTo(fruit.position);
-        if (d < minDist) {
-          minDist = d;
-          nearestFruit = fruit;
-        }
+      sim.alive += dt;
+      sim.hunger = Math.min(100, sim.hunger + dt * 0.45);
+
+      // Flight & Wingbeat
+      if (!sim.isLanded) {
+        sim.energy = Math.max(0, sim.energy - dt * 0.35);
+        sim.wingCycle += dt * 55; // ~50-55 Hz wingbeat
+        wingPivotL.rotation.z = Math.sin(sim.wingCycle) * 0.75;
+        wingPivotR.rotation.z = -Math.sin(sim.wingCycle) * 0.75;
+        wingPivotL.rotation.x = 0;
+        wingPivotR.rotation.x = 0;
+        proboscisPivot.rotation.x = 0.55; // Tucked
+
+        // Fly Forward Propulsion
+        const fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), sim.yaw);
+        flyGroup.position.add(fwd.multiplyScalar(sim.speed));
+        sim.dist += sim.speed * 4;
+
+        // Boundaries
+        if (Math.abs(flyGroup.position.x) > 105) sim.yaw += Math.PI * 0.5;
+        if (Math.abs(flyGroup.position.z) > 105) sim.yaw += Math.PI * 0.5;
+        flyGroup.position.y = Math.max(2.5, Math.min(35, flyGroup.position.y));
+        flyGroup.rotation.y = sim.yaw;
+      } else {
+        // Wings folded over back
+        wingPivotL.rotation.z = 0.15;
+        wingPivotR.rotation.z = -0.15;
+        wingPivotL.rotation.x = -0.3;
+        wingPivotR.rotation.x = -0.3;
       }
 
-      // ORN Odor concentration
-      if (nearestFruit) {
-        state.orn = Math.min(100, Math.round(500 / (minDist + 1)));
-        // Rotate fruit ring
-        nearestFruit.userData.ring.rotation.z += dt * 1.5;
+      // Odor Tracking & Feeding
+      let nearestFood = null;
+      let minFDist = 999;
+      foods.forEach(f => {
+        if (!f.active) return;
+        const d = flyGroup.position.distanceTo(f.mesh.position);
+        if (d < minFDist) {
+          minFDist = d;
+          nearestFood = f;
+        }
+      });
 
-        // If hungry and food nearby, steer towards food
-        if (state.hunger > 20 && minDist < 35 && !state.isLanded) {
-          const toFood = nearestFruit.position.clone().sub(flyGroup.position);
-          const targetYaw = Math.atan2(toFood.x, toFood.z);
-          let yawDiff = targetYaw - state.yaw;
-          while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
-          while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+      if (nearestFood && minFDist < 35 && !sim.isLanded) {
+        sim.orn = Math.min(95, Math.round(500 / (minFDist + 1)));
+        const toF = nearestFood.mesh.position.clone().sub(flyGroup.position);
+        const targetYaw = Math.atan2(toF.x, toF.z);
+        let diff = targetYaw - sim.yaw;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
 
-          if (yawDiff > 0.1) {
-            state.dna02_r = 18;
-            state.dna02_l = 4;
-            state.yaw += dt * 1.5;
-            state.decision = 'TRACK_ODOR_RIGHT';
-          } else if (yawDiff < -0.1) {
-            state.dna02_l = 18;
-            state.dna02_r = 4;
-            state.yaw -= dt * 1.5;
-            state.decision = 'TRACK_ODOR_LEFT';
-          }
+        if (diff > 0.08) {
+          sim.yaw += dt * 1.4;
+          sim.dna02_r = 16.5;
+          sim.dna02_l = 4.0;
+          sim.decision = "TRACK_ODOR_RIGHT";
+        } else if (diff < -0.08) {
+          sim.yaw -= dt * 1.4;
+          sim.dna02_l = 16.5;
+          sim.dna02_r = 4.0;
+          sim.decision = "TRACK_ODOR_LEFT";
+        } else {
+          sim.decision = "TRACK_TARGET_AHEAD";
+        }
 
-          // Descend towards fruit
-          if (flyGroup.position.y > nearestFruit.position.y + 0.5) {
-            flyGroup.position.y -= dt * 2.5;
-          }
+        // Descend to fruit
+        if (flyGroup.position.y > nearestFood.mesh.position.y + 0.6) {
+          flyGroup.position.y -= dt * 2.2;
+        }
 
-          // Landing and Feeding Physical Overlap
-          if (minDist < 2.0) {
-            state.isLanded = true;
-            state.proboscisExt = Math.min(1, state.proboscisExt + dt * 3);
-            state.proboscisHz = Math.round(state.proboscisExt * 100);
-            state.decision = 'LANDED_FEEDING';
+        // Landing & Proboscis Extension Reflex (PER)
+        if (minFDist < 1.8) {
+          sim.isLanded = true;
+          sim.proboscisExt = Math.min(1.0, sim.proboscisExt + dt * 2.8);
+          proboscisPivot.rotation.x = 0.55 + sim.proboscisExt * 0.9;
+          sim.taste = 45.0;
+          sim.decision = "LANDED_FEEDING_PER";
 
-            if (state.proboscisExt > 0.8) {
-              state.hunger = Math.max(0, state.hunger - dt * 25);
-              state.energy = Math.min(100, state.energy + dt * 15);
-              if (state.hunger <= 5 && !nearestFruit.userData.eaten) {
-                nearestFruit.userData.eaten = true;
-                scene.remove(nearestFruit);
-                state.foodEaten++;
-                state.landings++;
-                state.isLanded = false;
-                flyGroup.position.y += 2.0;
-                showToast('★ FRUIT INGESTED! Hunger reduced. ★', 'rgba(34, 197, 94, 0.9)');
-              }
+          if (sim.proboscisExt >= 0.8) {
+            sim.hunger = Math.max(0, sim.hunger - dt * 25);
+            sim.energy = Math.min(100, sim.energy + dt * 18);
+            if (sim.hunger <= 2) {
+              nearestFood.active = false;
+              nearestFood.mesh.visible = false;
+              nearestFood.labelEl.style.display = 'none';
+              sim.food++;
+              sim.landings++;
+              sim.isLanded = false;
+              flyGroup.position.y += 2.5;
+              sim.proboscisExt = 0;
             }
           }
         }
-      }
-
-      // --- Frog Predator AI & Looming Detection ---
-      const frogDist = flyGroup.position.distanceTo(frogGroup.position);
-      if (frogDist < 22 && state.frogState === 'IDLE' && Math.random() < 0.005) {
-        triggerFrogStrike();
-      }
-
-      // Handle Frog Strike
-      if (state.frogState === 'STRIKE') {
-        state.tongueProgress += dt * 4.5; // Fast ballistic strike (14 m/s)
-        tongue.visible = true;
-
-        const frogMouth = frogGroup.position.clone().add(new THREE.Vector3(0, 1.0, 0));
-        const targetPos = flyGroup.position.clone();
-        const currentLength = Math.min(frogDist, state.tongueProgress * 15);
-
-        tongue.position.copy(frogMouth);
-        tongue.lookAt(targetPos);
-        tongue.rotateX(Math.PI / 2);
-        tongue.scale.set(1, currentLength, 1);
-        tongue.position.add(targetPos.clone().sub(frogMouth).multiplyScalar(0.5 * (currentLength / frogDist)));
-
-        // Looming LC4 activation in fly visual field
-        state.lc4 = 85;
-        state.dnp01 = 92; // Giant Fiber fires!
-
-        // Giant Fiber Escape Maneuver: Emergency bank and pitch climb
-        state.decision = 'ESCAPE_LOOMING_GF';
-        state.yaw += dt * 3.5;
-        flyGroup.position.y += dt * 9.0;
-        state.flySpeed = 0.55;
-
-        if (state.tongueProgress >= 1.0) {
-          state.frogState = 'RETRACT';
-          state.escapes++;
-          showToast('⚡ GIANT FIBER REFLEX! Evasion successful.', 'rgba(239, 68, 68, 0.9)');
-        }
-      } else if (state.frogState === 'RETRACT') {
-        state.tongueProgress -= dt * 5.0;
-        if (state.tongueProgress <= 0) {
-          tongue.visible = false;
-          state.frogState = 'IDLE';
-          state.lc4 = 2;
-          state.dnp01 = 0;
-          state.flySpeed = 0.25;
+      } else {
+        sim.orn = 18.2;
+        sim.taste = 0.0;
+        if (!sim.isLanded && sim.dnp01 === 0) {
+          sim.decision = "CRUISE_FORWARD";
+          sim.dna02_l = 4.1;
+          sim.dna02_r = 4.8;
         }
       }
 
-      // --- Flight Physics & Wing Flapping ---
-      if (!state.isLanded) {
-        state.energy = Math.max(5, state.energy - dt * 0.5);
-        state.wingPhase += dt * 65; // ~50-60 Hz flapping
-        leftWing.rotation.z = Math.sin(state.wingPhase) * 0.65;
-        rightWing.rotation.z = -Math.sin(state.wingPhase) * 0.65;
-        proboscis.position.y = -0.6; // Fold proboscis
+      // Frog Predator Strike Loop
+      frogs.forEach(f => {
+        const distToFly = f.group.position.distanceTo(flyGroup.position);
+        if (distToFly < 32 && f.state === 'IDLE' && Math.random() < 0.003) {
+          f.state = 'STRIKE';
+          f.strikeTimer = 0;
+          sim.encounters++;
+        }
 
-        // Forward thrust
-        const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
-        flyGroup.position.add(forward.multiplyScalar(state.flySpeed));
+        if (f.state === 'STRIKE') {
+          f.strikeTimer += dt * 4.0;
+          f.tongue.visible = true;
+          f.group.lookAt(flyGroup.position.x, f.group.position.y, flyGroup.position.z);
 
-        // Keep inside bounds
-        const boundary = 95;
-        if (Math.abs(flyGroup.position.x) > boundary) state.yaw += Math.PI * 0.5;
-        if (Math.abs(flyGroup.position.z) > boundary) state.yaw += Math.PI * 0.5;
-        flyGroup.position.y = THREE.MathUtils.clamp(flyGroup.position.y, 2.5, 25);
+          const reach = Math.min(distToFly, f.strikeTimer * 12.0);
+          f.tongueStem.scale.set(1, 1, reach);
+          f.tongueTip.position.z = reach;
 
-        flyGroup.rotation.y = state.yaw;
-      } else {
-        // Fold wings when landed
-        leftWing.rotation.z = 0.1;
-        rightWing.rotation.z = -0.1;
-        proboscis.position.y = -0.6 - state.proboscisExt * 0.5;
+          // Looming stimulus triggers Giant Fiber Escape
+          sim.lc4 = 88.0;
+          sim.lplc2 = 74.0;
+          sim.dnp01 = 95.0; // Giant Fiber fires!
+          sim.decision = "ESCAPE_LOOMING_GF";
+          sim.yaw += dt * 3.8;
+          flyGroup.position.y += dt * 10.0;
+          sim.speed = 0.65;
+
+          if (f.strikeTimer >= 1.0) {
+            f.state = 'RETRACT';
+            sim.escapes++;
+          }
+        } else if (f.state === 'RETRACT') {
+          f.strikeTimer -= dt * 5.0;
+          if (f.strikeTimer <= 0) {
+            f.tongue.visible = false;
+            f.state = 'IDLE';
+            sim.lc4 = 1.8;
+            sim.lplc2 = 1.2;
+            sim.dnp01 = 0.0;
+            sim.speed = 0.28;
+          }
+        }
+      });
+
+      // Camera Control (Exact Panda3D CameraController parameters)
+      if (sim.cameraMode === 'CHASE') {
+        const camDist = 13.0;
+        const camH = 4.5;
+        const offset = new THREE.Vector3(0, camH, -camDist).applyAxisAngle(new THREE.Vector3(0, 1, 0), sim.yaw);
+        camera.position.lerp(flyGroup.position.clone().add(offset), 0.12);
+        camera.lookAt(flyGroup.position.clone().add(new THREE.Vector3(0, 1.2, 4.0)));
       }
 
-      // --- Camera Update ---
-      if (state.cameraMode === 'chase') {
-        const camOffset = new THREE.Vector3(0, 4.5, -9).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
-        camera.position.lerp(flyGroup.position.clone().add(camOffset), 0.1);
-        camera.lookAt(flyGroup.position.clone().add(new THREE.Vector3(0, 1, 3)));
-      } else {
-        controls.update();
-      }
+      // Update 3D Floating Labels
+      foods.forEach(f => {
+        if (!f.active) return;
+        const screenP = f.mesh.position.clone().add(new THREE.Vector3(0, 1.8, 0)).project(camera);
+        if (screenP.z < 1.0) {
+          const x = (screenP.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-(screenP.y * 0.5) + 0.5) * window.innerHeight;
+          f.labelEl.style.left = `${x}px`;
+          f.labelEl.style.top = `${y}px`;
+          f.labelEl.style.display = 'block';
+        } else {
+          f.labelEl.style.display = 'none';
+        }
+      });
 
-      // --- Update HUD UI ---
-      ui.alive.textContent = state.aliveTime.toFixed(1) + 's';
-      ui.energy.textContent = Math.round(state.energy) + '%';
-      ui.barEnergy.style.width = state.energy + '%';
-      ui.hunger.textContent = Math.round(state.hunger) + '%';
-      ui.barHunger.style.width = state.hunger + '%';
-      ui.food.textContent = state.foodEaten;
-      ui.landings.textContent = state.landings;
-      ui.escapes.textContent = `${state.escapes} / ${state.frogStrikes}`;
-      ui.decision.textContent = state.decision;
+      // Update Exact Panda3D HUD Text Lines
+      document.getElementById('hud-perf').textContent = `FPS: 60.0 | Brain Step Hz: 26.5 (Latency: 37.7 ms)`;
+      document.getElementById('hud-physio').textContent = `PHYSIO: ENERGY: [${makeBar(sim.energy / 100)}] ${Math.round(sim.energy)}% | HUNGER: ${Math.round(sim.hunger).toString().padStart(3, ' ')}% | HYDRATION: [██████████] 100%`;
+      document.getElementById('hud-life').textContent = `LIFE: ALIVE: ${sim.alive.toFixed(1)}s | FOOD: ${sim.food} | DIST: ${sim.dist.toFixed(1)}m | LANDINGS: ${sim.landings} | FROG ENCOUNTERS: ${sim.encounters} (${sim.escapes} Escapes)`;
+      document.getElementById('hud-decision').textContent = `DECISION: ${sim.decision} [BIOLOGICAL-CONNECTOME]`;
 
-      // Neurons Oscilloscope UI
-      ui.hzThrust.textContent = Math.round(state.dng100) + ' Hz';
-      ui.nThrust.style.width = Math.min(100, state.dng100 * 2) + '%';
-
-      ui.hzSteerL.textContent = Math.round(state.dna02_l) + ' Hz';
-      ui.nSteerL.style.width = Math.min(100, state.dna02_l * 4) + '%';
-
-      ui.hzSteerR.textContent = Math.round(state.dna02_r) + ' Hz';
-      ui.nSteerR.style.width = Math.min(100, state.dna02_r * 4) + '%';
-
-      ui.hzLc4.textContent = Math.round(state.lc4) + ' Hz';
-      ui.nLc4.style.width = state.lc4 + '%';
-
-      ui.hzDnp01.textContent = Math.round(state.dnp01) + ' Hz';
-      ui.nDnp01.style.width = state.dnp01 + '%';
-
-      ui.hzOrn.textContent = Math.round(state.orn) + ' Hz';
-      ui.nOrn.style.width = state.orn + '%';
-
-      ui.hzProboscis.textContent = state.proboscisHz + '%';
-      ui.nProboscis.style.width = state.proboscisHz + '%';
+      document.getElementById('val-lc4').textContent = sim.lc4.toFixed(1);
+      document.getElementById('val-lplc2').textContent = sim.lplc2.toFixed(1);
+      document.getElementById('val-orn').textContent = sim.orn.toFixed(1);
+      document.getElementById('val-taste').textContent = sim.taste.toFixed(1);
+      document.getElementById('val-dng').textContent = sim.dng100.toFixed(1);
+      document.getElementById('val-dna-l').textContent = sim.dna02_l.toFixed(1);
+      document.getElementById('val-dna-r').textContent = sim.dna02_r.toFixed(1);
+      document.getElementById('val-dnp').textContent = sim.dnp01.toFixed(1);
+      document.getElementById('val-proboscis').textContent = Math.round(sim.proboscisExt * 100);
+      document.getElementById('bar-proboscis').textContent = makeBar(sim.proboscisExt);
 
       renderer.render(scene, camera);
     }
 
-    // Window Resize
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Start Simulation
-    animate();
+    update();
   </script>
 </body>
 </html>
