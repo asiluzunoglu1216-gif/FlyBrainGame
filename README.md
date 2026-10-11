@@ -1,10 +1,11 @@
-[🇺🇸 English](README.md) | [🇹🇷 Türkçe](README_TR.md)
+[🇺🇸 English](README.md) | [🇹🇷 Türkçe](README_TR.md) | [🌐 **Play Live Web Demo**](https://asiluzunoglu1216-gif.github.io/FlyBrainGame/)
 
 # 🪰 FlyBrainGame: 166,700-Neuron Biological Connectome Simulation
 
+[![Play Live Demo](https://img.shields.io/badge/🎮%20Live%20Demo-Play%20in%20Browser-0284c7.svg?style=for-the-badge)](https://asiluzunoglu1216-gif.github.io/FlyBrainGame/)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Connectome](https://img.shields.io/badge/Connectome-Janelia%20MaleCNS%20v1.0-green.svg)](https://janelia.org)
-[![Engine](https://img.shields.io/badge/3D%20Engine-Panda3D-orange.svg)](https://www.panda3d.org)
+[![Engine](https://img.shields.io/badge/3D%20Engine-Panda3D%20%2F%20Three.js-orange.svg)](https://www.panda3d.org)
 [![Control](https://img.shields.io/badge/Neural%20Control-100%25%20Pure%20Connectome-brightgreen.svg)](#-100-pure-connectome-control)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 

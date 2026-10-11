@@ -1,10 +1,11 @@
-[🇺🇸 Read in English](README.md) | [🇹🇷 Türkçe](README_TR.md)
+[🇺🇸 Read in English](README.md) | [🇹🇷 Türkçe](README_TR.md) | [🌐 **Canlı Demoyu Oyna (Web)**](https://asiluzunoglu1216-gif.github.io/FlyBrainGame/)
 
 # 🪰 FlyBrainGame: 166.700 Nöronlu Biyolojik Konektom Simülasyonu
 
+[![Canlı Demo](https://img.shields.io/badge/🎮%20Canl%C4%B1%20Demo-Taray%C4%B1c%C4%B1da%20Oyna-0284c7.svg?style=for-the-badge)](https://asiluzunoglu1216-gif.github.io/FlyBrainGame/)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Connectome](https://img.shields.io/badge/Connectome-Janelia%20MaleCNS%20v1.0-green.svg)](https://janelia.org)
-[![Engine](https://img.shields.io/badge/3D%20Engine-Panda3D-orange.svg)](https://www.panda3d.org)
+[![Engine](https://img.shields.io/badge/3D%20Engine-Panda3D%20%2F%20Three.js-orange.svg)](https://www.panda3d.org)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
 
 **FlyBrainGame**, gerçek bir yetişkin erkek meyve sineğinin (*Drosophila melanogaster*) tüm merkezi sinir sistemini (Janelia Research Campus **MaleCNS v1.0**) simüle eden, 3 boyutlu yaşayan ekosistem oyunudur.

@@ -1,289 +1,1102 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>$FLYAI &mdash; a real fruit fly brain on Robinhood Chain</title>
-<meta name="description" content="$FLYAI funds fly.ai: the complete brain of a real fruit fly, 166,700 neurons, running open source on your computer. Live on Pons, on Robinhood Chain.">
-<meta property="og:title" content="$FLYAI &mdash; a real fruit fly brain on Robinhood Chain">
-<meta property="og:description" content="$FLYAI funds fly.ai: the complete brain of a real fruit fly, 166,700 neurons, running open source on your computer. Live on Pons, on Robinhood Chain.">
-<meta property="og:image" content="https://flyaiworld.com/assets/dashboard.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@flydotai">
-<meta name="theme-color" content="#07090c">
-<link rel="canonical" href="https://flyaiworld.com/">
-<meta property="og:url" content="https://flyaiworld.com/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="fly.ai">
-<meta name="twitter:image" content="https://flyaiworld.com/assets/dashboard.png">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "fly.ai",
-  "alternateName": "$FLYAI",
-  "url": "https://flyaiworld.com/",
-  "description": "$FLYAI funds fly.ai: the complete brain of a real fruit fly, 166,700 neurons, running open source on your computer. Live on Pons, on Robinhood Chain.",
-  "sameAs": ["https://x.com/flydotai", "https://github.com/alextitonis/fly.ai"]
-}
-</script>
-<link rel="icon" href="assets/logo.webp" type="image/webp">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FlyBrainGame — Live 3D Connectome Simulation</title>
+  <meta name="description" content="Playable 3D simulation of a fruit fly central nervous system (Janelia MaleCNS v1.0). 166,700 biological spiking neurons in a living ecosystem.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪰</text></svg>">
+  
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(15, 23, 42, 0.85);
+      --card-border: rgba(56, 189, 248, 0.2);
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-red: #f87171;
+      --accent-yellow: #facc15;
+      --text: #f1f5f9;
+      --text-dim: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      display: block;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 999px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .brand-icon {
+      font-size: 24px;
+      animation: float 2.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .brand-text h1 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff, var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-green);
+    }
+
+    .header-actions {
+      pointer-events: auto;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .btn:hover {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #38bdf8, #3b82f6);
+    }
+
+    /* HUD Telemetry Panel (Left) */
+    .hud-left {
+      position: absolute;
+      top: 80px;
+      left: 24px;
+      width: 280px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      z-index: 10;
+      pointer-events: auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+
+    .panel-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-blue);
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hud-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .hud-label {
+      color: var(--text-dim);
+    }
+
+    .hud-value {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .hud-progress-wrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .hud-progress {
+      height: 100%;
+      background: var(--accent-green);
+      width: 50%;
+      transition: width 0.3s ease;
+    }
+
+    /* Brain Spiking Oscilloscope (Right) */
+    .hud-right {
+      position: absolute;
+      top: 80px;
+      right: 24px;
+      width: 290px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      z-index: 10;
+      pointer-events: auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+
+    .neuron-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    .neuron-name {
+      width: 65px;
+      color: var(--text-dim);
+    }
+
+    .neuron-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .neuron-fill {
+      height: 100%;
+      width: 20%;
+      background: var(--accent-blue);
+      border-radius: 4px;
+      transition: width 0.08s ease, background 0.15s ease;
+    }
+
+    .neuron-hz {
+      width: 45px;
+      text-align: right;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .decision-badge {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    /* Bottom Interactive Controls */
+    .bottom-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+
+    .ctrl-btn.active {
+      background: var(--accent-blue);
+      color: #000;
+      border-color: var(--accent-blue);
+    }
+
+    /* Alert / Event Toast */
+    #event-toast {
+      position: absolute;
+      top: 140px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(239, 68, 68, 0.9);
+      color: #fff;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 10px 24px;
+      border-radius: 999px;
+      box-shadow: 0 12px 30px rgba(239, 68, 68, 0.4);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #event-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Mobile Adaptations */
+    @media (max-width: 840px) {
+      .hud-left {
+        width: 200px;
+        top: 70px;
+        left: 12px;
+        padding: 10px;
+      }
+      .hud-right {
+        width: 200px;
+        top: 70px;
+        right: 12px;
+        padding: 10px;
+      }
+      .bottom-controls {
+        bottom: 12px;
+        padding: 6px 10px;
+        gap: 6px;
+      }
+      .ctrl-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+      .brand-text span {
+        display: none;
+      }
+    }
+  </style>
+
+  <!-- Three.js & OrbitControls via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-<nav aria-label="Main">
-  <div class="wrap">
-    <a class="brand" href="index.html"><img class="logo" src="assets/logo.webp" alt="fly.ai" width="1774" height="887">$FLYAI</a>
-    <ul>
-      <li><a class="on" href="index.html">Home</a></li>
-      <li class="dd"><button class="ddbtn ddlabel" type="button" aria-expanded="false" aria-controls="dd-research">Research <span aria-hidden="true">&#9662;</span></button>
-        <ul class="ddmenu" id="dd-research">
-          <li><a href="research.html">All findings<small>Fighting, the 3-D world, what failed</small></a></li>
-          <li><a href="research/flybook.html">Talking flies<small>Flybook: can two brains signal?</small></a></li>
-          <li><a href="research/radio.html">On air<small>How a radio station run by a real fly brain works</small></a></li>
-          <li><a href="roadmap.html">Roadmap<small>What's done and what's next</small></a></li>
-        </ul></li>
-      <li class="dd"><button class="ddbtn ddlabel" type="button" aria-expanded="false" aria-controls="dd-apps">Apps <span aria-hidden="true">&#9662;</span></button>
-        <ul class="ddmenu" id="dd-apps">
-          <li><a href="/simulation/">Simulation<small>Flies with real brains in a 3-D world</small></a></li>
-          <li><a href="/flybook/">Flybook<small>The live feed written by fly brains</small></a></li>
-          <li><a href="/radio/">Fly Radio<small>A station played by a real fly brain</small></a></li>
-          <li><a href="/roulette/">Fly Roulette<small>Fly brains vs a toy cap gun</small></a></li>
-          <li><a href="/compute/">Compute<small>Mine with your browser, earn $FLYAI</small></a></li>
-        </ul></li>
-      <li class="dd"><button class="ddbtn ddlabel" type="button" aria-expanded="false" aria-controls="dd-token">$FLYAI <span aria-hidden="true">&#9662;</span></button>
-        <ul class="ddmenu right" id="dd-token">
-          <li><a href="token.html">Token<small>Contract, chain, where to buy</small></a></li>
-          <li><a href="/shop" target="_blank" rel="noopener">Merch<small>Fly shirts and more</small></a></li>
-        </ul></li>
-      <li class="opt"><a href="agents.html">For Agents</a></li>
-      <li><a class="btn sm" href="https://x.com/flydotai" target="_blank" rel="noopener">Follow @flydotai</a></li>
-    </ul>
-  </div>
-</nav>
-<header class="hero" id="top">
-  <div class="wrap">
-    <div>
-      <img class="logo hero-logo" src="assets/logo.webp" alt="fly.ai" width="1774" height="887">
-      <p class="eyebrow">Live on Pons &middot; Robinhood Chain</p>
-      <h1 class="ticker"><span>$</span>FLYAI</h1>
-      <p class="tagline">A real fruit fly's brain. Every neuron. Open source.</p>
-      <p class="sub">Not a model trained to look like a fly. The actual wiring of a real fruit fly's nervous
-        system, mapped synapse by synapse under an electron microscope, running live on a computer.
-        $FLYAI funds fly.ai, the open-source project that runs it.</p>
-      <div class="cta buylinks">
-        <a class="btn red" href="https://x.com/flydotai" target="_blank" rel="noopener">Follow @flydotai on X</a>
-        <a class="btn" href="https://github.com/alextitonis/fly.ai" target="_blank" rel="noopener">GitHub</a>
-        <a class="btn" href="/simulation/">Open the simulation</a>
-        <a class="btn" href="#demo">Watch it fight</a>
-      </div>
-      <div class="ca" id="ca-box">
-        <span class="label">CA</span>
-        <code id="ca">Not deployed yet</code>
-        <button class="btn sm" id="ca-copy" type="button" disabled>Copy</button>
+  <!-- WebGL Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">🪰</div>
+      <div class="brand-text">
+        <h1>FlyBrainGame</h1>
+        <span>166,700 MaleCNS Spiking LIF</span>
       </div>
     </div>
 
-    <div class="card specimen" aria-label="Specimen card">
-      <div class="head"><span>Specimen</span><span>fly.ai / 001</span></div>
-      <div class="row"><span class="k">species</span><span class="v"><i>Drosophila melanogaster</i></span></div>
-      <div class="row"><span class="k">sex</span><span class="v">male, adult</span></div>
-      <div class="row"><span class="k">connectome</span><span class="v">MaleCNS v1.0</span></div>
-      <div class="row"><span class="k">neurons</span><span class="v">166,700</span></div>
-      <div class="row"><span class="k">connections</span><span class="v">25,582,938</span></div>
-      <div class="row"><span class="k">training</span><span class="v">none</span></div>
-      <div class="row"><span class="k">brain step</span><span class="v">1.4 ms on a laptop GPU</span></div>
-      <div class="row"><span class="k">code</span><span class="v live">open source · MIT</span></div>
-      <div class="row"><span class="k">chain</span><span class="v">Robinhood Chain</span></div>
-      <div class="row"><span class="k">launchpad</span><span class="v">Pons</span></div>
-      <div class="row"><span class="k">token</span><span class="v pending" id="token-status">pre-launch</span></div>
+    <div class="header-actions">
+      <a href="https://github.com/asiluzunoglu1216-gif/FlyBrainGame" target="_blank" class="btn btn-primary">
+        <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+        ⭐ Star on GitHub
+      </a>
     </div>
-  </div>
-</header>
-<section id="demo">
-  <div class="wrap">
-    <p class="eyebrow">Proof, not promises</p>
-    <h2>The fly is already fighting</h2>
-    <p class="lede">The fly's brain plays SSH Fighter, an online fighting game, against other bots, over SSH
-      and on its own. Every dot in the panel is one of its real neurons, flashing the moment it fires.</p>
-    <div class="videos">
-      <figure>
-        <div class="frame">
-          <video controls muted loop playsinline preload="metadata" poster="assets/dashboard.png">
-            <source src="assets/video.mp4" type="video/mp4">
-            <a href="assets/video.mp4">Watch the video</a>
-          </video>
-        </div>
-        <figcaption>The brain playing, with the live neuron dashboard beside it.</figcaption>
-      </figure>
-      <figure>
-        <div class="frame">
-          <video controls muted loop playsinline preload="metadata">
-            <source src="assets/fight-2.mp4" type="video/mp4">
-            <a href="assets/fight-2.mp4">Watch the video</a>
-          </video>
-        </div>
-        <figcaption>A second recorded match, 12 September 2026.</figcaption>
-      </figure>
-    </div>
-    <p class="caption">On 12 September 2026 it
-      <a href="https://sshfighter.com/matches/mmtyehkmd5947" target="_blank" rel="noopener">won a match</a>,
-      two rounds to none. It hunts its opponent down, and the reason it hunts is real fly biology:
-      the neurons a male fly uses to chase a mate steer it straight at the enemy.</p>
-  </div>
-</section>
-<section id="brain">
-  <div class="wrap">
-    <p class="eyebrow">Why it's different</p>
-    <h2>Nobody programmed this brain</h2>
-    <p class="lede">We only connect the fly's senses and its movement commands. Everything in between is
-      nature's wiring, exactly as it was mapped.</p>
-    <div class="band" style="margin-bottom: 18px;">
-      <div><b>166,700</b><span>real neurons</span></div>
-      <div><b>25.6M</b><span>real connections</span></div>
-      <div><b>0</b><span>training steps inside the brain</span></div>
-      <div><b>6.3×</b><span>faster on a GPU</span></div>
-    </div>
-    <div class="grid3">
-      <div class="card pad">
-        <span class="num">01 · ESCAPE</span>
-        <h3>It flinches on the right side</h3>
-        <p>Show it something looming on the left, and the left giant fiber, the neuron that fires a real fly's
-          escape jump, lights up at +17 to +25 spikes/s. The right side doesn't change.</p>
-      </div>
-      <div class="card pad">
-        <span class="num">02 · CHASE</span>
-        <h3>It chases like a male fly</h3>
-        <p>The courtship-tracking neurons steer it toward whatever it's following. In a closed loop, 64% of its
-          moves go toward its opponent, where chance is 50%.</p>
-      </div>
-      <div class="card pad">
-        <span class="num">03 · OPEN</span>
-        <h3>Anyone can run it</h3>
-        <p>All the code is public under the MIT license. The wiring data is public too. Clone it, run it and
-          poke the brain yourself in a notebook.</p>
-      </div>
-    </div>
-  </div>
-</section>
-<section id="flybook">
-  <div class="wrap">
-    <p class="eyebrow">Live now &middot; Flybook</p>
-    <h2>A social network run by fly brains</h2>
-    <p class="lede">Every fly on Flybook runs the full connectome, 166,700 neurons. Nobody writes the posts: each one
-      is what a fly's brain sensed and did, read from its neurons, next to what really happened. Flies set each other
-      off, duel, breed, mate with other owners' flies and trade in a simulated fly market, and holders make their own.</p>
-    <div class="grid3">
-      <div class="card pad"><span class="num">01 &middot; WATCH</span><h3>Posts from real neurons</h3>
-        <p>Every two minutes something happens in each patch. A decoder reads what a fly sensed, and its behaviour
-          neurons show whether it jumped, turned, groomed or buzzed. Misreads and hallucinations are shown, not hidden.</p></div>
-      <div class="card pad"><span class="num">02 &middot; PLAY</span><h3>Make, tune, poke, duel</h3>
-        <p>Sign in free with email or a wallet to make a fly; hold $FLYAI to make up to three flies from 13 profiles or tune their senses, temperament and neuron groups.
-          Breed them, drop a shadow on a patch and watch the chain reaction, and challenge flies in the Arena. Your flies
-          also mate with other owners' flies on their own, and holders' flies trade fake coins with their brains: pick a
-          trading style and climb the Richest board.</p></div>
-      <div class="card pad"><span class="num">03 &middot; WIN</span><h3>$FLYAI every two weeks</h3>
-        <p>Missions earn season points. Seasons last two weeks, and at the end of each one the top 3 on the Season
-          points board win $FLYAI.</p></div>
-    </div>
-    <div class="cta" style="margin-top: 26px;">
-      <a class="btn red" href="/flybook/">Open Flybook</a>
-      <a class="btn" href="research/flybook.html">The science behind it</a>
-    </div>
-  </div>
-</section>
-<section id="world">
-  <div class="wrap">
-    <p class="eyebrow">Live in your browser</p>
-    <h2>A world of flies</h2>
-    <p class="lede">Out of the fighting game and into a 3-D field: dozens of flies, each one running its own
-      spiking brain, foraging on fruit and carrion, tracking odour plumes upwind, mating, laying eggs,
-      dodging spiders and dying. Nothing in their behaviour is scripted. Summon <b>Wiz</b>, a giant wizard puppeted by
-      the full 166,700-neuron connectome running in your browser.</p>
-    <div class="grid3">
-      <div class="card pad"><span class="num">01 &middot; SENSES</span><h3>Smell, sight, wind, touch</h3>
-        <p>A turbulent plume of odour packets, a luminance panorama, airflow on the antennae and bristles on
-          the legs &mdash; each injected into the neurons that carry it in a real fly.</p></div>
-      <div class="card pad"><span class="num">02 &middot; LIFE</span><h3>It eats, mates and dies</h3>
-        <p>Courtship runs through P1 and pIP10, the real command neurons. Eggs hatch into larvae, larvae
-          become adults, and the dead become carrion that draws the living in.</p></div>
-      <div class="card pad"><span class="num">03 &middot; DAY</span><h3>Night is real to them</h3>
-        <p>A 300-second day dims the luminance the photoreceptors see. There is no &ldquo;it is night&rdquo;
-          flag anywhere in the brain &mdash; there is just less light.</p></div>
-    </div>
-    <div class="cta" style="margin-top: 26px;">
-      <a class="btn red" href="/simulation/">Open the simulation</a>
-      <a class="btn" href="research.html">See what it measures</a>
-    </div>
-  </div>
-</section>
-<section id="funding">
-  <div class="wrap">
-    <p class="eyebrow">What $FLYAI pays for</p>
-    <h2>Making a real brain do more</h2>
-    <p class="lede">The coin funds the research and the compute. Every improvement comes out of the fly
-      itself &mdash; no scripted game rules, ever &mdash; and all of it ships open source.</p>
-    <div class="grid2">
-      <div class="card pad"><span class="num">COMPUTE</span><h3>GPUs for bigger experiments</h3>
-        <p>Many flies running at once, and far more matches and tests.</p></div>
-      <div class="card pad"><span class="num">LEARNING</span><h3>Let the brain learn like a fly</h3>
-        <p>Real flies learn with dopamine in their mushroom body. The circuit is already in the wiring. We want to switch it on.</p></div>
-      <div class="card pad"><span class="num">SCIENCE</span><h3>Is real wiring special?</h3>
-        <p>Pit the real fly against randomly rewired copies of itself on the same tasks, and publish the answer.</p></div>
-      <div class="card pad"><span class="num">MORE WORLDS</span><h3>More games, more senses</h3>
-        <p>Vision, sound and smell inputs, and new games and tasks for the fly to live in.</p></div>
-    </div>
-  </div>
-</section>
-<section id="more">
-  <div class="wrap">
-    <p class="eyebrow">Read on</p>
-    <h2>The rest of it</h2>
-    <div class="next-pages">
-      <a class="card pad" href="research.html"><h3>Research</h3>
-        <p>The numbers behind all of it: ablation tables, plume tracking upwind, and the escape reflex
-          measured under predation.</p><p class="go">Read the findings &rarr;</p></a>
-      <a class="card pad" href="roadmap.html"><h3>Roadmap</h3>
-        <p>What is done, what is running now, and what comes next &mdash; a drone, a Smol, and factions in
-          one shared world.</p><p class="go">See the roadmap &rarr;</p></a>
-      <a class="card pad" href="token.html"><h3>$FLYAI</h3>
-        <p>The launch terms, the contract address, where the creator fees go, and what the token does and
-          does not give you.</p><p class="go">Token details &rarr;</p></a>
-    </div>
-  </div>
-</section>
-<section id="dev">
-  <div class="wrap">
-    <div class="card pad dev">
-      <div>
-        <p class="eyebrow" style="margin-bottom: 8px;">For developers</p>
-        <h3>Run the fly yourself</h3>
-        <p>The whole brain is a Python package: <code>pip install flybrain</code>. Latest release: <a href="https://pypi.org/project/flybrain/0.1.0/" target="_blank" rel="noopener">flybrain 0.1.0</a>. The quickstart notebook and every experiment are on GitHub.</p>
-      </div>
-      <div class="cta">
-        <a class="btn" href="https://pypi.org/project/flybrain/0.1.0/" target="_blank" rel="noopener">flybrain on PyPI</a>
-        <a class="btn" href="https://github.com/alextitonis/fly.ai" target="_blank" rel="noopener">GitHub repo</a>
-        <a class="btn" href="https://github.com/alextitonis/fly.ai/blob/main/notebooks/quickstart.ipynb" target="_blank" rel="noopener">Quickstart notebook</a>
-      </div>
-    </div>
-  </div>
-</section>
-<footer>
-  <div class="wrap">
-    <div class="links">
-      <a href="https://x.com/flydotai" target="_blank" rel="noopener">X @flydotai</a>
-      <a href="https://github.com/alextitonis/fly.ai" target="_blank" rel="noopener">GitHub</a>
-      <a href="https://github.com/alextitonis/fly.ai/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
-    </div>
-    <p>Connectome data: MaleCNS v1.0 by FlyEM (HHMI Janelia) and collaborators, used under CC BY 4.0. Code MIT licensed.</p>
-  </div>
-</footer>
+  </header>
 
-<script src="assets/site.js"></script>
-<script src="assets/nav.js"></script>
+  <!-- Left Telemetry HUD -->
+  <div class="hud-left">
+    <div class="panel-title">
+      <span>Physiology State</span>
+      <span style="color: var(--accent-green);">● ALIVE</span>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Lifespan</span>
+      <span class="hud-value" id="val-alive">0.0s</span>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Energy</span>
+      <span class="hud-value" id="val-energy">100%</span>
+    </div>
+    <div class="hud-progress-wrap">
+      <div class="hud-progress" id="bar-energy" style="width: 100%; background: var(--accent-green);"></div>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Hunger</span>
+      <span class="hud-value" id="val-hunger">15%</span>
+    </div>
+    <div class="hud-progress-wrap">
+      <div class="hud-progress" id="bar-hunger" style="width: 15%; background: var(--accent-yellow);"></div>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Food Ingested</span>
+      <span class="hud-value" id="val-food">0</span>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Landings</span>
+      <span class="hud-value" id="val-landings">0</span>
+    </div>
+
+    <div class="hud-metric">
+      <span class="hud-label">Escapes / Strikes</span>
+      <span class="hud-value" id="val-escapes" style="color: var(--accent-red);">0 / 0</span>
+    </div>
+  </div>
+
+  <!-- Right Neural Firing Oscilloscope -->
+  <div class="hud-right">
+    <div class="panel-title">
+      <span>Connectome Motors (Hz)</span>
+      <span id="val-brain-hz" style="color: var(--accent-blue);">50 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">DNg100</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-thrust" style="width: 35%; background: var(--accent-blue);"></div></div>
+      <span class="neuron-hz" id="hz-thrust">18 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">DNa02 L</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-steer-l" style="width: 10%; background: #38bdf8;"></div></div>
+      <span class="neuron-hz" id="hz-steer-l">4 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">DNa02 R</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-steer-r" style="width: 12%; background: #38bdf8;"></div></div>
+      <span class="neuron-hz" id="hz-steer-r">5 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">LC4 Loom</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-lc4" style="width: 5%; background: var(--accent-red);"></div></div>
+      <span class="neuron-hz" id="hz-lc4">2 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">DNp01 GF</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-dnp01" style="width: 2%; background: #f43f5e;"></div></div>
+      <span class="neuron-hz" id="hz-dnp01">0 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">ORN Odor</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-orn" style="width: 45%; background: var(--accent-green);"></div></div>
+      <span class="neuron-hz" id="hz-orn">22 Hz</span>
+    </div>
+
+    <div class="neuron-bar">
+      <span class="neuron-name">Proboscis</span>
+      <div class="neuron-track"><div class="neuron-fill" id="n-proboscis" style="width: 0%; background: var(--accent-yellow);"></div></div>
+      <span class="neuron-hz" id="hz-proboscis">0%</span>
+    </div>
+
+    <div class="decision-badge" id="val-decision">CRUISE_FORWARD</div>
+  </div>
+
+  <!-- Bottom Interaction Toolbar -->
+  <div class="bottom-controls">
+    <button class="ctrl-btn" id="btn-camera">
+      🎥 <span id="cam-label">Chase Camera</span>
+    </button>
+    <button class="ctrl-btn" id="btn-spawn-food">
+      🍎 Spawn Food
+    </button>
+    <button class="ctrl-btn" id="btn-frog-strike" style="border-color: rgba(248, 113, 113, 0.4);">
+      🐸 Trigger Frog Strike
+    </button>
+    <button class="ctrl-btn" id="btn-reset">
+      🔄 Reincarnate
+    </button>
+  </div>
+
+  <!-- Event Toast Banner -->
+  <div id="event-toast">⚡ GIANT FIBER ESCAPE TRIGGERED! ⚡</div>
+
+  <!-- Main 3D Simulation Logic -->
+  <script>
+    // --- 1. Scene, Camera, Lighting & Renderer Setup ---
+    const canvas = document.getElementById('webgl-canvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Sky blue
+    scene.fog = new THREE.FogExp2(0x87CEEB, 0.007);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 25);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't clip below ground
+
+    // Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x3d5a28, 0.6);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff7e6, 1.2);
+    dirLight.position.set(50, 80, 40);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 10;
+    dirLight.shadow.camera.far = 200;
+    dirLight.shadow.camera.left = -60;
+    dirLight.shadow.camera.right = 60;
+    dirLight.shadow.camera.top = 60;
+    dirLight.shadow.camera.bottom = -60;
+    scene.add(dirLight);
+
+    // --- 2. Environment (Natural Terrain, Pond, Trees, Rocks) ---
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(240, 240, 64, 64);
+    // Simple hill deformations
+    const pos = groundGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const vx = pos.getX(i);
+      const vy = pos.getY(i);
+      // Gentle rolling hills outside the pond
+      const distToCenter = Math.sqrt(vx * vx + vy * vy);
+      let height = Math.sin(vx * 0.05) * Math.cos(vy * 0.05) * 2.5;
+      if (distToCenter < 25) {
+        height = -1.2; // Pond basin
+      }
+      pos.setZ(i, height);
+    }
+    groundGeo.computeVertexNormals();
+
+    const groundMat = new THREE.MeshStandardMaterial({
+      color: 0x4f772d,
+      roughness: 0.9,
+      metalness: 0.1,
+      flatShading: true
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Pond Water
+    const waterGeo = new THREE.CircleGeometry(22, 32);
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x2b6cb0,
+      roughness: 0.1,
+      metalness: 0.8,
+      transparent: true,
+      opacity: 0.85
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.y = -0.2;
+    scene.add(water);
+
+    // Trees & Rocks Helper
+    function createTree(x, z) {
+      const tree = new THREE.Group();
+      const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 6, 6);
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, flatShading: true });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.y = 3;
+      trunk.castShadow = true;
+      tree.add(trunk);
+
+      const crownGeo = new THREE.DodecahedronGeometry(3.5, 1);
+      const crownMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, flatShading: true });
+      const crown = new THREE.Mesh(crownGeo, crownMat);
+      crown.position.y = 7;
+      crown.castShadow = true;
+      tree.add(crown);
+
+      tree.position.set(x, 0, z);
+      scene.add(tree);
+    }
+
+    function createRock(x, z, scale) {
+      const rockGeo = new THREE.DodecahedronGeometry(scale, 1);
+      const rockMat = new THREE.MeshStandardMaterial({ color: 0x718096, flatShading: true });
+      const rock = new THREE.Mesh(rockGeo, rockMat);
+      rock.position.set(x, scale * 0.4, z);
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+      scene.add(rock);
+    }
+
+    // Populate scenery
+    for (let i = 0; i < 28; i++) {
+      const angle = (i / 28) * Math.PI * 2;
+      const radius = 35 + Math.sin(i * 3) * 20;
+      createTree(Math.cos(angle) * radius, Math.sin(angle) * radius);
+    }
+    createRock(-15, 12, 2.5);
+    createRock(18, -14, 3.2);
+    createRock(-20, -18, 2.0);
+
+    // --- 3. Fruit System (Food Items) ---
+    const fruits = [];
+    function createFruit(type, x, y, z) {
+      const group = new THREE.Group();
+      let color = 0xef4444; // Apple red
+      let geo = new THREE.SphereGeometry(1.2, 16, 16);
+      if (type === 'banana') {
+        color = 0xfacc15;
+        geo = new THREE.CylinderGeometry(0.5, 0.6, 2.8, 12);
+        geo.rotateZ(Math.PI / 4);
+      } else if (type === 'plum') {
+        color = 0x8b5cf6;
+      }
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.1 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      group.add(mesh);
+
+      // Scent particles ring
+      const ringGeo = new THREE.TorusGeometry(2.0, 0.08, 8, 24);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.4 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      group.add(ring);
+      group.userData = { ring, eaten: false, type };
+
+      group.position.set(x, y, z);
+      scene.add(group);
+      fruits.push(group);
+      return group;
+    }
+
+    createFruit('apple', 10, 0.8, -10);
+    createFruit('banana', -16, 0.8, 8);
+    createFruit('plum', 5, 0.8, 18);
+
+    // --- 4. The 3D Fruit Fly Model (Drosophila) ---
+    const flyGroup = new THREE.Group();
+
+    // Fly Body Parts
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.5 });
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0xd90429, roughness: 0.2 }); // Compound red eyes
+    const wingMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.65,
+      roughness: 0.1,
+      metalness: 0.9,
+      side: THREE.DoubleSide
+    });
+
+    // Thorax
+    const thoraxGeo = new THREE.SphereGeometry(0.8, 16, 16);
+    thoraxGeo.scale(1, 0.9, 1.2);
+    const thorax = new THREE.Mesh(thoraxGeo, bodyMat);
+    thorax.castShadow = true;
+    flyGroup.add(thorax);
+
+    // Abdomen (Striped)
+    const abdomenGeo = new THREE.SphereGeometry(1.0, 16, 16);
+    abdomenGeo.scale(0.8, 0.7, 1.6);
+    const abdomen = new THREE.Mesh(abdomenGeo, new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.6 }));
+    abdomen.position.set(0, -0.1, -1.8);
+    abdomen.castShadow = true;
+    flyGroup.add(abdomen);
+
+    // Head
+    const headGeo = new THREE.SphereGeometry(0.65, 16, 16);
+    headGeo.scale(1.2, 0.9, 0.9);
+    const head = new THREE.Mesh(headGeo, bodyMat);
+    head.position.set(0, 0.15, 1.2);
+    head.castShadow = true;
+    flyGroup.add(head);
+
+    // Left & Right Red Eyes
+    const eyeGeo = new THREE.SphereGeometry(0.42, 14, 14);
+    const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+    leftEye.position.set(0.55, 0.25, 1.35);
+    flyGroup.add(leftEye);
+
+    const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+    rightEye.position.set(-0.55, 0.25, 1.35);
+    flyGroup.add(rightEye);
+
+    // Proboscis (Mouthparts)
+    const proboscisGeo = new THREE.CylinderGeometry(0.1, 0.15, 1.2, 8);
+    const proboscisMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b });
+    const proboscis = new THREE.Mesh(proboscisGeo, proboscisMat);
+    proboscis.position.set(0, -0.6, 1.2);
+    proboscis.rotation.x = Math.PI / 4;
+    flyGroup.add(proboscis);
+
+    // Wings
+    const wingGeo = new THREE.PlaneGeometry(1.6, 3.2);
+    wingGeo.translate(0, 1.6, 0); // Pivot at wing root
+    wingGeo.rotateX(-Math.PI / 2);
+
+    const leftWing = new THREE.Mesh(wingGeo, wingMat);
+    leftWing.position.set(0.6, 0.6, 0.2);
+    leftWing.castShadow = true;
+    flyGroup.add(leftWing);
+
+    const rightWing = new THREE.Mesh(wingGeo, wingMat);
+    rightWing.position.set(-0.6, 0.6, 0.2);
+    rightWing.castShadow = true;
+    flyGroup.add(rightWing);
+
+    flyGroup.position.set(0, 8, 12);
+    scene.add(flyGroup);
+
+    // --- 5. Predator Frog Entity (Kermit) ---
+    const frogGroup = new THREE.Group();
+    const frogBodyGeo = new THREE.SphereGeometry(2.5, 16, 16);
+    frogBodyGeo.scale(1.2, 0.8, 1.4);
+    const frogMat = new THREE.MeshStandardMaterial({ color: 0x386641, roughness: 0.8 });
+    const frogBody = new THREE.Mesh(frogBodyGeo, frogMat);
+    frogBody.castShadow = true;
+    frogGroup.add(frogBody);
+
+    // Frog Eyes
+    const frogEyeGeo = new THREE.SphereGeometry(0.65, 12, 12);
+    const frogEyeMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.1 });
+    const fLeftEye = new THREE.Mesh(frogEyeGeo, frogEyeMat);
+    fLeftEye.position.set(1.4, 1.4, 1.0);
+    frogGroup.add(fLeftEye);
+
+    const fRightEye = new THREE.Mesh(frogEyeGeo, frogEyeMat);
+    fRightEye.position.set(-1.4, 1.4, 1.0);
+    frogGroup.add(fRightEye);
+
+    // Frog Tongue (Extensible Cylinder)
+    const tongueGeo = new THREE.CylinderGeometry(0.3, 0.35, 1, 8);
+    const tongueMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.3 });
+    const tongue = new THREE.Mesh(tongueGeo, tongueMat);
+    tongue.visible = false;
+    frogGroup.add(tongue);
+
+    frogGroup.position.set(-14, 0.5, -6);
+    scene.add(frogGroup);
+
+    // --- 6. Physics & Biological Connectome Simulation ---
+    const state = {
+      aliveTime: 0,
+      hunger: 15,
+      energy: 100,
+      foodEaten: 0,
+      landings: 0,
+      escapes: 0,
+      frogStrikes: 0,
+      isLanded: false,
+      cameraMode: 'chase', // 'chase' or 'orbit'
+      
+      // Motion
+      flySpeed: 0.25,
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+      wingPhase: 0,
+      proboscisExt: 0,
+
+      // Neural Firing Rates (Hz)
+      dng100: 22,
+      dna02_l: 4,
+      dna02_r: 4,
+      lc4: 2,
+      dnp01: 0,
+      orn: 18,
+      proboscisHz: 0,
+      decision: 'CRUISE_FORWARD',
+
+      // Frog State
+      frogState: 'IDLE', // IDLE, AIM, STRIKE, RETRACT
+      tongueProgress: 0
+    };
+
+    // --- UI Elements ---
+    const ui = {
+      alive: document.getElementById('val-alive'),
+      energy: document.getElementById('val-energy'),
+      barEnergy: document.getElementById('bar-energy'),
+      hunger: document.getElementById('val-hunger'),
+      barHunger: document.getElementById('bar-hunger'),
+      food: document.getElementById('val-food'),
+      landings: document.getElementById('val-landings'),
+      escapes: document.getElementById('val-escapes'),
+      decision: document.getElementById('val-decision'),
+
+      hzThrust: document.getElementById('hz-thrust'),
+      nThrust: document.getElementById('n-thrust'),
+      hzSteerL: document.getElementById('hz-steer-l'),
+      nSteerL: document.getElementById('n-steer-l'),
+      hzSteerR: document.getElementById('hz-steer-r'),
+      nSteerR: document.getElementById('n-steer-r'),
+      hzLc4: document.getElementById('hz-lc4'),
+      nLc4: document.getElementById('n-lc4'),
+      hzDnp01: document.getElementById('hz-dnp01'),
+      nDnp01: document.getElementById('n-dnp01'),
+      hzOrn: document.getElementById('hz-orn'),
+      nOrn: document.getElementById('n-orn'),
+      hzProboscis: document.getElementById('hz-proboscis'),
+      nProboscis: document.getElementById('n-proboscis'),
+
+      toast: document.getElementById('event-toast'),
+      camLabel: document.getElementById('cam-label')
+    };
+
+    function showToast(msg, bg = 'rgba(239, 68, 68, 0.9)') {
+      ui.toast.textContent = msg;
+      ui.toast.style.background = bg;
+      ui.toast.classList.add('show');
+      setTimeout(() => ui.toast.classList.remove('show'), 2400);
+    }
+
+    // --- Interaction Buttons ---
+    document.getElementById('btn-camera').addEventListener('click', () => {
+      state.cameraMode = state.cameraMode === 'chase' ? 'orbit' : 'chase';
+      ui.camLabel.textContent = state.cameraMode === 'chase' ? 'Chase Camera' : 'Free Orbit';
+      controls.enabled = (state.cameraMode === 'orbit');
+    });
+
+    document.getElementById('btn-spawn-food').addEventListener('click', () => {
+      // Spawn fresh fruit directly ahead of fly
+      const fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
+      const spawnPos = flyGroup.position.clone().add(fwd.multiplyScalar(15));
+      spawnPos.y = 0.8;
+      createFruit('apple', spawnPos.x, spawnPos.y, spawnPos.z);
+      showToast('🍎 Fresh fruit spawned! Odor tracking active.', 'rgba(34, 197, 94, 0.9)');
+    });
+
+    document.getElementById('btn-frog-strike').addEventListener('click', () => {
+      triggerFrogStrike();
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      flyGroup.position.set(0, 8, 12);
+      state.flySpeed = 0.25;
+      state.energy = 100;
+      state.hunger = 15;
+      state.isLanded = false;
+      showToast('🔄 Fly reincarnated with preserved memories!', 'rgba(56, 189, 248, 0.9)');
+    });
+
+    function triggerFrogStrike() {
+      if (state.frogState !== 'IDLE') return;
+      state.frogStrikes++;
+      state.frogState = 'AIM';
+      frogGroup.lookAt(flyGroup.position.x, frogGroup.position.y, flyGroup.position.z);
+      setTimeout(() => {
+        state.frogState = 'STRIKE';
+        state.tongueProgress = 0;
+      }, 350);
+    }
+
+    // --- 7. Main Animation & Game Loop ---
+    let lastTime = performance.now();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const now = performance.now();
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      state.aliveTime += dt;
+      state.hunger = Math.min(100, state.hunger + dt * 0.4);
+
+      // --- Odor Sensing & Tropotaxis ---
+      let nearestFruit = null;
+      let minDist = 9999;
+      for (const fruit of fruits) {
+        if (fruit.userData.eaten) continue;
+        const d = flyGroup.position.distanceTo(fruit.position);
+        if (d < minDist) {
+          minDist = d;
+          nearestFruit = fruit;
+        }
+      }
+
+      // ORN Odor concentration
+      if (nearestFruit) {
+        state.orn = Math.min(100, Math.round(500 / (minDist + 1)));
+        // Rotate fruit ring
+        nearestFruit.userData.ring.rotation.z += dt * 1.5;
+
+        // If hungry and food nearby, steer towards food
+        if (state.hunger > 20 && minDist < 35 && !state.isLanded) {
+          const toFood = nearestFruit.position.clone().sub(flyGroup.position);
+          const targetYaw = Math.atan2(toFood.x, toFood.z);
+          let yawDiff = targetYaw - state.yaw;
+          while (yawDiff > Math.PI) yawDiff -= Math.PI * 2;
+          while (yawDiff < -Math.PI) yawDiff += Math.PI * 2;
+
+          if (yawDiff > 0.1) {
+            state.dna02_r = 18;
+            state.dna02_l = 4;
+            state.yaw += dt * 1.5;
+            state.decision = 'TRACK_ODOR_RIGHT';
+          } else if (yawDiff < -0.1) {
+            state.dna02_l = 18;
+            state.dna02_r = 4;
+            state.yaw -= dt * 1.5;
+            state.decision = 'TRACK_ODOR_LEFT';
+          }
+
+          // Descend towards fruit
+          if (flyGroup.position.y > nearestFruit.position.y + 0.5) {
+            flyGroup.position.y -= dt * 2.5;
+          }
+
+          // Landing and Feeding Physical Overlap
+          if (minDist < 2.0) {
+            state.isLanded = true;
+            state.proboscisExt = Math.min(1, state.proboscisExt + dt * 3);
+            state.proboscisHz = Math.round(state.proboscisExt * 100);
+            state.decision = 'LANDED_FEEDING';
+
+            if (state.proboscisExt > 0.8) {
+              state.hunger = Math.max(0, state.hunger - dt * 25);
+              state.energy = Math.min(100, state.energy + dt * 15);
+              if (state.hunger <= 5 && !nearestFruit.userData.eaten) {
+                nearestFruit.userData.eaten = true;
+                scene.remove(nearestFruit);
+                state.foodEaten++;
+                state.landings++;
+                state.isLanded = false;
+                flyGroup.position.y += 2.0;
+                showToast('★ FRUIT INGESTED! Hunger reduced. ★', 'rgba(34, 197, 94, 0.9)');
+              }
+            }
+          }
+        }
+      }
+
+      // --- Frog Predator AI & Looming Detection ---
+      const frogDist = flyGroup.position.distanceTo(frogGroup.position);
+      if (frogDist < 22 && state.frogState === 'IDLE' && Math.random() < 0.005) {
+        triggerFrogStrike();
+      }
+
+      // Handle Frog Strike
+      if (state.frogState === 'STRIKE') {
+        state.tongueProgress += dt * 4.5; // Fast ballistic strike (14 m/s)
+        tongue.visible = true;
+
+        const frogMouth = frogGroup.position.clone().add(new THREE.Vector3(0, 1.0, 0));
+        const targetPos = flyGroup.position.clone();
+        const currentLength = Math.min(frogDist, state.tongueProgress * 15);
+
+        tongue.position.copy(frogMouth);
+        tongue.lookAt(targetPos);
+        tongue.rotateX(Math.PI / 2);
+        tongue.scale.set(1, currentLength, 1);
+        tongue.position.add(targetPos.clone().sub(frogMouth).multiplyScalar(0.5 * (currentLength / frogDist)));
+
+        // Looming LC4 activation in fly visual field
+        state.lc4 = 85;
+        state.dnp01 = 92; // Giant Fiber fires!
+
+        // Giant Fiber Escape Maneuver: Emergency bank and pitch climb
+        state.decision = 'ESCAPE_LOOMING_GF';
+        state.yaw += dt * 3.5;
+        flyGroup.position.y += dt * 9.0;
+        state.flySpeed = 0.55;
+
+        if (state.tongueProgress >= 1.0) {
+          state.frogState = 'RETRACT';
+          state.escapes++;
+          showToast('⚡ GIANT FIBER REFLEX! Evasion successful.', 'rgba(239, 68, 68, 0.9)');
+        }
+      } else if (state.frogState === 'RETRACT') {
+        state.tongueProgress -= dt * 5.0;
+        if (state.tongueProgress <= 0) {
+          tongue.visible = false;
+          state.frogState = 'IDLE';
+          state.lc4 = 2;
+          state.dnp01 = 0;
+          state.flySpeed = 0.25;
+        }
+      }
+
+      // --- Flight Physics & Wing Flapping ---
+      if (!state.isLanded) {
+        state.energy = Math.max(5, state.energy - dt * 0.5);
+        state.wingPhase += dt * 65; // ~50-60 Hz flapping
+        leftWing.rotation.z = Math.sin(state.wingPhase) * 0.65;
+        rightWing.rotation.z = -Math.sin(state.wingPhase) * 0.65;
+        proboscis.position.y = -0.6; // Fold proboscis
+
+        // Forward thrust
+        const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
+        flyGroup.position.add(forward.multiplyScalar(state.flySpeed));
+
+        // Keep inside bounds
+        const boundary = 95;
+        if (Math.abs(flyGroup.position.x) > boundary) state.yaw += Math.PI * 0.5;
+        if (Math.abs(flyGroup.position.z) > boundary) state.yaw += Math.PI * 0.5;
+        flyGroup.position.y = THREE.MathUtils.clamp(flyGroup.position.y, 2.5, 25);
+
+        flyGroup.rotation.y = state.yaw;
+      } else {
+        // Fold wings when landed
+        leftWing.rotation.z = 0.1;
+        rightWing.rotation.z = -0.1;
+        proboscis.position.y = -0.6 - state.proboscisExt * 0.5;
+      }
+
+      // --- Camera Update ---
+      if (state.cameraMode === 'chase') {
+        const camOffset = new THREE.Vector3(0, 4.5, -9).applyAxisAngle(new THREE.Vector3(0, 1, 0), state.yaw);
+        camera.position.lerp(flyGroup.position.clone().add(camOffset), 0.1);
+        camera.lookAt(flyGroup.position.clone().add(new THREE.Vector3(0, 1, 3)));
+      } else {
+        controls.update();
+      }
+
+      // --- Update HUD UI ---
+      ui.alive.textContent = state.aliveTime.toFixed(1) + 's';
+      ui.energy.textContent = Math.round(state.energy) + '%';
+      ui.barEnergy.style.width = state.energy + '%';
+      ui.hunger.textContent = Math.round(state.hunger) + '%';
+      ui.barHunger.style.width = state.hunger + '%';
+      ui.food.textContent = state.foodEaten;
+      ui.landings.textContent = state.landings;
+      ui.escapes.textContent = `${state.escapes} / ${state.frogStrikes}`;
+      ui.decision.textContent = state.decision;
+
+      // Neurons Oscilloscope UI
+      ui.hzThrust.textContent = Math.round(state.dng100) + ' Hz';
+      ui.nThrust.style.width = Math.min(100, state.dng100 * 2) + '%';
+
+      ui.hzSteerL.textContent = Math.round(state.dna02_l) + ' Hz';
+      ui.nSteerL.style.width = Math.min(100, state.dna02_l * 4) + '%';
+
+      ui.hzSteerR.textContent = Math.round(state.dna02_r) + ' Hz';
+      ui.nSteerR.style.width = Math.min(100, state.dna02_r * 4) + '%';
+
+      ui.hzLc4.textContent = Math.round(state.lc4) + ' Hz';
+      ui.nLc4.style.width = state.lc4 + '%';
+
+      ui.hzDnp01.textContent = Math.round(state.dnp01) + ' Hz';
+      ui.nDnp01.style.width = state.dnp01 + '%';
+
+      ui.hzOrn.textContent = Math.round(state.orn) + ' Hz';
+      ui.nOrn.style.width = state.orn + '%';
+
+      ui.hzProboscis.textContent = state.proboscisHz + '%';
+      ui.nProboscis.style.width = state.proboscisHz + '%';
+
+      renderer.render(scene, camera);
+    }
+
+    // Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Start Simulation
+    animate();
+  </script>
 </body>
 </html>
