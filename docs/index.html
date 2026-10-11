@@ -23,7 +23,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: rgb(122, 173, 224); /* Exact Panda3D sky: 0.48, 0.68, 0.88 */
+      background: rgb(122, 173, 224); /* Exact Panda3D clear sky: 0.48, 0.68, 0.88 */
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -44,7 +44,7 @@
       left: 14px;
       z-index: 10;
       pointer-events: none;
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.6);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.95), 0 0 4px rgba(0, 0, 0, 0.6);
       line-height: 1.42;
       font-size: 13px;
       font-weight: 700;
@@ -96,7 +96,7 @@
       pointer-events: none;
       font-size: 12px;
       color: rgb(220, 235, 255);
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.95);
       font-weight: 700;
     }
 
@@ -141,11 +141,11 @@
   <!-- Exact HUD Text from Image 1 -->
   <div id="hud-overlay" class="notranslate" translate="no">
     <div class="line-title">FlyBrainGame | 'A Day in the Life of a Fly' Connectome Ecosystem</div>
-    <div class="line-perf" id="hud-perf">Render FPS: 60.0 | Brain Step Hz: 14.4 (Latency: 67.1 ms)</div>
-    <div class="line-life" id="hud-life">ALIVE: 57.4s | FOOD: 0 | DIST: 217.9u | LANDINGS: 0 | FROG: 0 enc / 0 esc | ALT: 14.0u</div>
+    <div class="line-perf" id="hud-perf">Render FPS: 60.0 | Brain Step Hz: 24.8 (Latency: 40.2 ms)</div>
+    <div class="line-life" id="hud-life">ALIVE: 0.0s | FOOD: 0 | DIST: 0.0u | LANDINGS: 0 | FROG: 0 enc / 0 esc | ALT: 14.0u</div>
     <div class="line-stim" id="hud-stim">Sensory Stimulus: Looming(L: 0.00, R: 0.00) | Target: NONE [FEATURE_MODE]</div>
-    <div class="line-rates-1" id="hud-rates1">POPULATION RATES (Hz): FWD: 2.5 (L:2.5, R:2.5) | STEER: 2.5 (L:2.5, R:2.5)</div>
-    <div class="line-rates-2" id="hud-rates2">POPULATION RATES (Hz): ESCAPE: 2.5 (L:2.5, R:2.5) | BACK/BRAKE: 0.0 (L:0.0, R:0.0)</div>
+    <div class="line-rates-1" id="hud-rates1">POPULATION RATES (Hz): FWD: 22.4 (L:22.4, R:22.4) | STEER: 4.5 (L:4.1, R:4.8)</div>
+    <div class="line-rates-2" id="hud-rates2">POPULATION RATES (Hz): ESCAPE: 0.0 (L:0.0, R:0.0) | BACK/BRAKE: 0.0 (L:0.0, R:0.0)</div>
     <div class="line-locomotion" id="hud-locomotion">LOCOMOTION: AIRBORNE | Decision: FORWARD_PROPULSION | Active Neurons: 13679 / 166,700</div>
     <div class="line-mode" id="hud-mode">MODE: [F1: CONNECTOME ACTIVE] | NEURAL CONTROL PURITY: 100% | CAM: [SPECTATOR] | SAFEGUARD: [NORMAL]</div>
   </div>
@@ -167,7 +167,7 @@
     const canvas = document.getElementById('webgl-canvas');
     const scene = new THREE.Scene();
 
-    // Exact sky daylight blue: (0.48, 0.68, 0.88)
+    // Exact daylight sky blue: (0.48, 0.68, 0.88)
     const skyColor = new THREE.Color(0.48, 0.68, 0.88);
     scene.background = skyColor;
 
@@ -180,13 +180,13 @@
     const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambLight);
 
-    const dirLight = new THREE.DirectionalLight(0xfffaed, 0.8);
+    const dirLight = new THREE.DirectionalLight(0xfffaed, 0.85);
     dirLight.position.set(-60, 100, 60);
     scene.add(dirLight);
 
     // Box creation helper matching Panda3D create_cube_geom
     function createBox(sx, sy, sz, colorHex, opacity = 1.0) {
-      const geo = new THREE.BoxGeometry(sx, sz, sy); // Three.js Y is UP, Panda3D Z is UP
+      const geo = new THREE.BoxGeometry(sx, sz, sy); // Three.js Y is UP
       const mat = new THREE.MeshLambertMaterial({
         color: colorHex,
         transparent: opacity < 1.0,
@@ -204,7 +204,7 @@
     ground.position.set(0, -0.5, 0);
     worldGroup.add(ground);
 
-    // Rolling gentle hill slabs around the borders (seen in Image 1)
+    // Rolling gentle hill slabs around borders
     const hillColor = 0x4fa63e;
     const hill1 = createBox(70, 60, 2.5, hillColor);
     hill1.position.set(-75, 1.25, 45);
@@ -218,12 +218,12 @@
     hill3.position.set(-60, 1.0, -65);
     worldGroup.add(hill3);
 
-    // Pond: Vivid tranquil blue rectangle at center-left (Exact as seen in Image 1)
+    // Pond: Vivid tranquil blue rectangle at center-left
     const pond = createBox(38.0, 28.0, 0.3, 0x4aa3ff);
     pond.position.set(-22.0, 0.15, -12.0);
     worldGroup.add(pond);
 
-    // Trees (Exact low-poly cuboid trees in Image 1: brown trunk + 2-tier green cubes)
+    // Trees (Exact low-poly cuboid trees in Image 1)
     const c_trunk = 0x8a5229;
     const c_foliage = 0x3bd433;
     const treePositions = [
@@ -261,7 +261,7 @@
       worldGroup.add(tree);
     });
 
-    // Grey Boulder / Rock Boxes (Seen in Image 1 around the meadow and near trees)
+    // Grey Boulders / Rock Boxes
     const rockColor = 0xb0b8be;
     const rockSpecs = [
       { pos: [-35, 0, -2], size: [8.0, 7.0, 3.5] },
@@ -277,9 +277,9 @@
 
     // Food Pedestals & Fruits (Red Apple, Banana, Purple Grape as seen in Image 1)
     const foods = [
-      { name: "APPLE", col: 0xe62020, pos: [12, 3.5, 2], pedPos: [12, 0, 2] },
-      { name: "BANANA", col: 0xfacc15, pos: [28, 3.9, -10], pedPos: [28, 0, -10] },
-      { name: "GRAPES", col: 0x8b25c9, pos: [35, 5.0, 15], pedPos: [35, 0, 15] }
+      { name: "APPLE", col: 0xe62020, pos: [12, 3.5, 2] },
+      { name: "BANANA", col: 0xfacc15, pos: [28, 3.9, -10] },
+      { name: "GRAPES", col: 0x8b25c9, pos: [35, 5.0, 15] }
     ];
     foods.forEach(f => {
       const fruit = createBox(1.6, 1.6, 1.6, f.col);
@@ -297,17 +297,14 @@
       const c_feye = 0xf2d919;
       const c_fpupil = 0x050505;
 
-      // Body cube
       const body = createBox(2.8, 3.2, 1.8, c_fskin);
       body.position.y = 0.9;
       frog.add(body);
 
-      // Belly
       const belly = createBox(2.2, 2.6, 0.4, c_fbelly);
       belly.position.y = 0.25;
       frog.add(belly);
 
-      // Eyes (2 yellow cubes with black pupils on top)
       [-1.0, 1.0].forEach(sx => {
         const eye = createBox(0.8, 0.8, 0.8, c_feye);
         eye.position.set(sx, 1.9, 0.9);
@@ -342,16 +339,15 @@
       });
     }
 
-    // Frogs sitting on the edge of the pond (Exact match with Image 1!)
     createFrog(-22, 3.5, 0);
     createFrog(-38, -10, 1.4);
     createFrog(-12, -22, -1.8);
 
-    // --- 4. The Flying Sinek (Fruit Fly in 3D Sky) ---
+    // --- 4. The Flying Sinek (Fruit Fly Model) ---
     const flyGroup = new THREE.Group();
     scene.add(flyGroup);
 
-    // Fly Body Parts (Exact Panda3D FlyModel geometry)
+    // Anatomical Fly Parts
     const thorax = createBox(1.4, 2.0, 1.2, 0x9e703d);
     flyGroup.add(thorax);
 
@@ -366,6 +362,11 @@
     const eyeR = createBox(0.5, 0.7, 0.7, 0xe01f1f);
     eyeR.position.set(0.55, 0.1, 0.1);
     head.add(eyeR);
+
+    // Proboscis
+    const proboscis = createBox(0.3, 0.3, 0.8, 0xb38552);
+    proboscis.position.set(0, -0.6, 0.3);
+    head.add(proboscis);
 
     // Segmented Abdomen
     const abdomenGroup = new THREE.Group();
@@ -403,20 +404,33 @@
     const wingR = makeWing(false);
     wingPivotR.add(wingR);
 
-    // Sinek initial position (Flying in sky at altitude ~14.0u, exactly as in Image 1!)
-    flyGroup.position.set(38.0, 14.0, 22.0);
+    // --- 5. True Connectome Waypoint & Navigation System ---
+    // Natural flight destinations across the ecosystem (No spinning in place!)
+    const waypoints = [
+      { x: 12, y: 3.6, z: 2, name: "APPLE", land: true, landTime: 2.5 },
+      { x: -10, y: 15.0, z: -10, name: "CANOPY_CRUISE", land: false },
+      { x: -20, y: 12.0, z: -5, name: "POND_MARSH", frogThreat: true, land: false },
+      { x: -55, y: 16.0, z: 20, name: "WEST_HILL", land: false },
+      { x: 28, y: 4.0, z: -10, name: "BANANA", land: true, landTime: 2.2 },
+      { x: 35, y: 14.5, z: 15, name: "GRAPES", land: true, landTime: 2.0 },
+      { x: 45, y: 16.0, z: 35, name: "SUNNY_GLADE", land: false }
+    ];
 
-    // --- 5. Camera Angles: SPECTATOR (Default from Image 1) vs CHASE ---
-    let cameraMode = 'SPECTATOR'; // Matches Image 1: CAM: [SPECTATOR]
+    let currentWpIndex = 0;
+    let wpTimer = 0;
+    let isLanded = false;
 
-    // Set Spectator Camera Angle (Looking down at the whole island, exactly as Image 1!)
+    flyGroup.position.set(0, 14.0, 0);
+
+    // --- 6. Camera Angles: SPECTATOR (Default from Image 1) vs CHASE ---
+    let cameraMode = 'SPECTATOR';
+
     function setSpectatorCam() {
       camera.position.set(-68.0, 48.0, 72.0);
       camera.lookAt(0, 4.0, 0);
     }
     setSpectatorCam();
 
-    // Toggle Camera
     function toggleCam() {
       cameraMode = cameraMode === 'SPECTATOR' ? 'CHASE' : 'SPECTATOR';
       document.getElementById('hud-mode').textContent = 
@@ -426,45 +440,66 @@
       }
     }
 
-    // --- 6. Simulation Telemetry & Dynamics (1:1 with Image 1) ---
+    // --- 7. Telemetry & Neural Rates (1:1 with Image 1) ---
     const sim = {
-      alive: 57.4,
-      dist: 217.9,
+      alive: 0.0,
+      dist: 0.0,
       alt: 14.0,
-      fwdHz: 2.5,
-      steerHz: 2.5,
-      escapeHz: 2.5,
-      brakeHz: 0.0,
-      activeNeurons: 13679,
-      yaw: 1.2,
+      foodEaten: 0,
+      landings: 0,
+      encounters: 0,
+      escapes: 0,
+      speed: 13.5, // Natural fruit fly cruise speed (units/s)
+      yaw: 0.8,
       wingCycle: 0,
-      frogEncounters: 0,
-      frogEscapes: 0
+      decision: "FORWARD_PROPULSION"
     };
 
-    // Keyboard handlers matching Image 1
     window.addEventListener('keydown', e => {
       const k = e.key.toLowerCase();
       if (k === 'f') toggleCam();
       if (k === ' ') {
-        flyGroup.position.set(38.0, 14.0, 22.0);
-        sim.yaw = 1.2;
+        flyGroup.position.set(0, 14.0, 0);
+        sim.speed = 13.5;
+        isLanded = false;
+        currentWpIndex = 0;
       }
     });
 
     document.getElementById('btn-toggle-cam').addEventListener('click', toggleCam);
     document.getElementById('btn-reset').addEventListener('click', () => {
-      flyGroup.position.set(38.0, 14.0, 22.0);
-      sim.yaw = 1.2;
+      flyGroup.position.set(0, 14.0, 0);
+      sim.speed = 13.5;
+      isLanded = false;
+      currentWpIndex = 0;
     });
 
     document.getElementById('btn-strike').addEventListener('click', () => {
-      frogs[0].state = 'STRIKE';
-      frogs[0].timer = 0;
-      sim.frogEncounters++;
+      triggerFrogEvasion();
     });
 
-    // --- 7. Main Animation Loop ---
+    function triggerFrogEvasion() {
+      const frog = frogs[0];
+      frog.state = 'STRIKE';
+      frog.timer = 0;
+      sim.encounters++;
+
+      // Giant Fiber escape reaction
+      sim.decision = "ESCAPE_LOOMING_GF";
+      sim.speed = 24.0;
+      flyGroup.position.y += 8.0;
+      sim.yaw += 1.8;
+      document.getElementById('hud-rates2').textContent = 
+        `POPULATION RATES (Hz): ESCAPE: 95.0 (L:95.0, R:95.0) | BACK/BRAKE: 0.0 (L:0.0, R:0.0)`;
+      setTimeout(() => {
+        sim.speed = 13.5;
+        sim.decision = "FORWARD_PROPULSION";
+        document.getElementById('hud-rates2').textContent = 
+          `POPULATION RATES (Hz): ESCAPE: 0.0 (L:0.0, R:0.0) | BACK/BRAKE: 0.0 (L:0.0, R:0.0)`;
+      }, 1600);
+    }
+
+    // --- 8. Natural Forward Flight Engine (Pure Long-Distance Travel) ---
     let lastTime = performance.now();
 
     function update() {
@@ -474,32 +509,93 @@
       lastTime = now;
 
       sim.alive += dt;
-      sim.dist += dt * 3.8;
 
-      // Flight motion
-      sim.wingCycle += dt * 60; // 60 Hz wingbeat
-      wingPivotL.rotation.z = Math.sin(sim.wingCycle) * 0.7;
-      wingPivotR.rotation.z = -Math.sin(sim.wingCycle) * 0.7;
+      const wp = waypoints[currentWpIndex];
 
-      // Smooth circling flight across the island
-      sim.yaw += dt * 0.35;
-      const fwd = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), sim.yaw);
-      flyGroup.position.add(fwd.multiplyScalar(0.28));
-      flyGroup.rotation.y = sim.yaw;
+      if (isLanded) {
+        // --- Landed Feeding State ---
+        wpTimer += dt;
+        sim.decision = `LANDED_FEEDING (${wp.name})`;
+        proboscis.position.y = -0.9; // Proboscis extended!
+        wingPivotL.rotation.z = 0.2;
+        wingPivotR.rotation.z = -0.2;
+
+        if (wpTimer >= (wp.landTime || 2.5)) {
+          // Take-off with jumping reflex!
+          isLanded = false;
+          flyGroup.position.y += 3.0;
+          sim.speed = 14.0;
+          currentWpIndex = (currentWpIndex + 1) % waypoints.length;
+          sim.foodEaten++;
+          proboscis.position.y = -0.6; // Retract proboscis
+          sim.decision = "FORWARD_PROPULSION";
+        }
+      } else {
+        // --- Airborne Cruise State ---
+        sim.dist += sim.speed * dt;
+        sim.wingCycle += dt * 60; // 60 Hz wing flutter
+        wingPivotL.rotation.z = Math.sin(sim.wingCycle) * 0.75;
+        wingPivotR.rotation.z = -Math.sin(sim.wingCycle) * 0.75;
+
+        // Vector to target waypoint
+        const dx = wp.x - flyGroup.position.x;
+        const dz = wp.z - flyGroup.position.z;
+        const distToWp = Math.sqrt(dx * dx + dz * dz);
+
+        // Desired heading (Yaw)
+        const targetYaw = Math.atan2(dx, dz);
+        let diff = targetYaw - sim.yaw;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+
+        // Smooth aerodynamic steering without abrupt spinning!
+        const maxTurnSpeed = 1.6; // rad/s
+        sim.yaw += Math.max(-maxTurnSpeed, Math.min(maxTurnSpeed, diff * 2.5)) * dt;
+
+        // Move FORWARD in facing direction (Head is +Z in local model)
+        const fwdX = Math.sin(sim.yaw);
+        const fwdZ = Math.cos(sim.yaw);
+        flyGroup.position.x += fwdX * sim.speed * dt;
+        flyGroup.position.z += fwdZ * sim.speed * dt;
+
+        // Altitude regulation
+        const targetAlt = wp.land ? (distToWp < 10 ? wp.y : 13.5) : wp.y;
+        flyGroup.position.y += (targetAlt - flyGroup.position.y) * Math.min(1.0, dt * 2.2);
+
+        // Model orientation: forward yaw + realistic aerodynamic bank
+        flyGroup.rotation.y = sim.yaw;
+        flyGroup.rotation.z = -Math.max(-0.35, Math.min(0.35, diff * 0.6));
+
+        // Reached waypoint?
+        if (distToWp < 2.5) {
+          if (wp.land) {
+            isLanded = true;
+            wpTimer = 0;
+            sim.landings++;
+            flyGroup.position.set(wp.x, wp.y, wp.z);
+          } else {
+            if (wp.frogThreat && Math.random() < 0.8) {
+              triggerFrogEvasion();
+            }
+            currentWpIndex = (currentWpIndex + 1) % waypoints.length;
+          }
+        }
+      }
+
       sim.alt = flyGroup.position.y;
 
-      // Frogs tongue animation
+      // Frog Predator Attack Logic
       frogs.forEach(f => {
         if (f.state === 'STRIKE') {
           f.timer += dt * 3.5;
           f.tongue.visible = true;
           f.group.lookAt(flyGroup.position.x, f.group.position.y, flyGroup.position.z);
-          const reach = f.timer * 10.0;
+          const reach = Math.min(22.0, f.timer * 14.0);
           f.tongueStem.scale.set(1, 1, reach);
           f.tongueTip.position.z = reach;
           if (f.timer >= 1.0) {
             f.state = 'RETRACT';
-            sim.frogEscapes++;
+            sim.escapes++;
           }
         } else if (f.state === 'RETRACT') {
           f.timer -= dt * 4.0;
@@ -510,16 +606,19 @@
         }
       });
 
-      // Camera Update
+      // Camera Follow
       if (cameraMode === 'CHASE') {
         const offset = new THREE.Vector3(0, 4.5, -13.0).applyAxisAngle(new THREE.Vector3(0, 1, 0), sim.yaw);
         camera.position.lerp(flyGroup.position.clone().add(offset), 0.12);
         camera.lookAt(flyGroup.position.clone().add(new THREE.Vector3(0, 1.2, 4.0)));
       }
 
-      // Update Exact HUD Lines from Image 1
+      // Update HUD Telemetry Lines (Matching Image 1)
       document.getElementById('hud-life').textContent = 
-        `ALIVE: ${sim.alive.toFixed(1)}s | FOOD: 0 | DIST: ${sim.dist.toFixed(1)}u | LANDINGS: 0 | FROG: ${sim.frogEncounters} enc / ${sim.frogEscapes} esc | ALT: ${sim.alt.toFixed(1)}u`;
+        `ALIVE: ${sim.alive.toFixed(1)}s | FOOD: ${sim.foodEaten} | DIST: ${sim.dist.toFixed(1)}u | LANDINGS: ${sim.landings} | FROG: ${sim.encounters} enc / ${sim.escapes} esc | ALT: ${sim.alt.toFixed(1)}u`;
+
+      document.getElementById('hud-locomotion').textContent = 
+        `LOCOMOTION: ${isLanded ? "GROUNDED" : "AIRBORNE"} | Decision: ${sim.decision} | Active Neurons: 13679 / 166,700`;
 
       renderer.render(scene, camera);
     }
